@@ -1,0 +1,3639 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<!-- user-scalable=no: הקפיצה נעשית בלחיצה, וזום דו-אצבעות באמצע משחק רק מפריע -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="description" content="מסע הקוביות — משחק מיפוי ידע לתלמידים: בוחרים מקצוע אחד, בהתאמה אישית לרמה.">
+<meta name="theme-color" content="#5FB6E8">
+<meta name="color-scheme" content="light">
+<meta name="robots" content="noindex">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta property="og:title" content="מסע הקוביות — Master Evaluator">
+<meta property="og:description" content="מסע הקוביות — משחק מיפוי ידע לתלמידים: בוחרים מקצוע אחד, בהתאמה אישית לרמה.">
+<meta property="og:type" content="website">
+<title>מסע הקוביות — Master Evaluator</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A7%8A%3C/text%3E%3C/svg%3E">
+<script>window.CQ_SUBJECT_PICK=true;</script>
+<style>html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#5FB6E8;
+  overscroll-behavior:none;-webkit-text-size-adjust:100%;}</style>
+</head>
+<body>
+<div id="cq-root" dir="rtl" lang="he">
+<style>
+  html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#5FB6E8;}
+  #cq-root{position:fixed;inset:0;font-family:"Segoe UI","Arial Hebrew",Arial,sans-serif;-webkit-user-select:none;user-select:none;}
+  #game{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;}
+  /* ---------- HUD ---------- */
+  #hud{position:absolute;top:12px;right:14px;left:14px;display:flex;align-items:center;gap:10px;pointer-events:none;flex-wrap:wrap;}
+  .chip{background:rgba(29,43,69,.82);color:#FFF8EC;border-radius:999px;padding:7px 16px;font-size:19px;font-weight:700;
+        display:flex;align-items:center;gap:8px;box-shadow:0 2px 8px rgba(20,30,50,.25);font-variant-numeric:tabular-nums;}
+  .chip small{font-size:13px;font-weight:600;opacity:.85;}
+  #hudBtns{margin-inline-start:auto;display:flex;gap:8px;pointer-events:auto;}
+  #hudBtns button{width:44px;height:44px;border-radius:12px;border:none;background:rgba(29,43,69,.82);color:#FFF8EC;
+        font-size:20px;cursor:pointer;box-shadow:0 2px 8px rgba(20,30,50,.25);}
+  #hudBtns button:hover{background:rgba(29,43,69,.95);}
+  #hudBtns button:focus-visible{outline:3px solid #FFD166;outline-offset:2px;}
+  /* ---------- toast ---------- */
+  #toast{position:absolute;bottom:96px;right:0;left:0;display:flex;justify-content:center;pointer-events:none;z-index:50;}
+  /* z-index: ה-toast קודם לחלונות ב-DOM, ובלי זה הם מציירים מעליו. «📊 הדוחות שלי» נראה
+     כאילו לא מגיב כשההודעה «עדיין אין דוח שמור» הוסתרה מאחורי מסך הפתיחה (24.9.26). */
+  #toast span{background:rgba(29,43,69,.9);color:#FFF8EC;padding:10px 22px;border-radius:999px;font-size:18px;font-weight:700;
+        opacity:0;transform:translateY(12px);transition:opacity .25s,transform .25s;box-shadow:0 4px 14px rgba(20,30,50,.3);}
+  #toast span.show{opacity:1;transform:translateY(0);}
+  /* ---------- overlays ---------- */
+  .overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(24,36,58,.45);
+        backdrop-filter:blur(3px);transition:opacity .3s;}
+  .overlay.hidden{opacity:0;pointer-events:none;}
+  .panel{background:#FFF8EC;color:#1D2B45;border-radius:22px;padding:34px 40px 30px;max-width:540px;width:calc(100% - 48px);
+        text-align:center;box-shadow:0 18px 50px rgba(15,25,45,.45);display:flex;flex-direction:column;gap:14px;align-items:center;}
+  .panel h1{margin:0;font-size:38px;letter-spacing:-0.5px;text-wrap:balance;}
+  .panel h1 .cube{display:inline-block;transform:rotate(-8deg);}
+  .panel p{margin:0;font-size:17px;line-height:1.6;color:#3A4A66;text-wrap:balance;}
+  .panel .keys{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;font-size:15px;color:#3A4A66;}
+  .panel .keys b{background:#1D2B45;color:#FFF8EC;border-radius:8px;padding:3px 10px;font-size:14px;}
+  .panel .worlds{display:flex;gap:7px;justify-content:center;flex-wrap:wrap;font-size:13px;font-weight:700;color:#3A4A66;}
+  .panel .worlds span{background:#F1E7D4;border-radius:999px;padding:4px 11px;}
+  /* **כל** חלונית גוללת בטלפון ולא נחתכת. תחילה זה חל רק על מסך הפתיחה, אבל
+     שאלת הבנת הנקרא באנגלית ארוכה בדיוק כמו מסך הפתיחה: קטע של 488 תווים
+     ייצר כרטיס בגובה 956px בתוך מסך של 844 — הצ׳יפים נחתכו למעלה, ותשובה ד׳
+     נחתכה למטה ולא היה אפשר ללחוץ עליה. אותו כלל, בכל החלוניות.
+     border-box חובה: בלעדיו ה-padding מתווסף ל-max-height והפאנל עדיין גולש. */
+  .panel{box-sizing:border-box;max-height:94vh;overflow:auto;overscroll-behavior:contain;}
+  /* במסך נמוך מוותרים על רשימת שמות העולמות — «יוצאים לדרך» חייב להיראות בלי גלילה */
+  @media (max-height:800px){ .panel .worlds{display:none;} }
+  /* בטלפון אין מקלדת — הרמז «רווח לקפיצה» מיותר ותופס שורה יקרה */
+  #cq-root.touch .panel .keys{display:none;}
+  /* מסך צר: מכווצים את הפתיחה כדי שכל המסלול גיל ← «יוצאים לדרך» ייכנס בלי גלילה */
+  @media (max-width:560px){
+    .panel{padding:22px 20px 20px;gap:10px;}
+    .panel h1{font-size:27px;}
+    .panel p{font-size:15px;line-height:1.5;}
+    .subjRow{font-size:13px;gap:6px;}
+    .subjRow span{padding:4px 11px;}
+    .grades{gap:6px;}
+    .gradeBtn{font-size:16px;padding:8px 0;}
+    .bigbtn{font-size:19px;padding:12px 30px;}
+    #ageEcho{font-size:14px;}
+    #ageEcho .flavor{display:none;}
+  }
+  .subjRow{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;font-size:15px;font-weight:800;color:#1D2B45;}
+  .subjRow span{background:#7C5CFF;color:#fff;border-radius:999px;padding:5px 15px;}
+  .panel .stats{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:4px;}
+  .panel .stat{background:#F1E7D4;border-radius:14px;padding:10px 18px;min-width:96px;}
+  .panel .stat b{display:block;font-size:26px;font-variant-numeric:tabular-nums;}
+  .panel .stat small{font-size:13px;color:#5A6B7C;}
+  .bigbtn{border:none;border-radius:999px;background:#7C5CFF;color:#fff;font-size:21px;font-weight:800;font-family:inherit;
+        padding:14px 46px;cursor:pointer;margin-top:8px;box-shadow:0 6px 0 #5F45C9;transition:transform .08s;}
+  .bigbtn:hover{transform:translateY(-2px);}
+  .bigbtn:active{transform:translateY(3px);box-shadow:0 2px 0 #5F45C9;}
+  .bigbtn:focus-visible{outline:3px solid #FFD166;outline-offset:3px;}
+  /* ---------- touch controls ---------- */
+  #touch{position:absolute;bottom:18px;right:0;left:0;display:none;justify-content:space-between;padding:0 22px;pointer-events:none;}
+  #touch.on{display:flex;}
+  #touch .grp{display:flex;gap:14px;pointer-events:auto;}
+  #touch button{width:74px;height:74px;border-radius:50%;border:none;font-size:30px;background:rgba(29,43,69,.55);
+        color:#FFF8EC;touch-action:none;}
+  /* ---------- question modal ---------- */
+  #qOv .panel{max-width:640px;text-align:right;align-items:stretch;gap:12px;}
+  .qchips{display:flex;gap:8px;flex-wrap:wrap;}
+  .qchip{background:#F1E7D4;color:#3A4A66;border-radius:999px;padding:4px 12px;font-size:13.5px;font-weight:700;}
+  .qchip.accent{background:#7C5CFF;color:#fff;}
+  .qstem{font-size:20px;font-weight:700;color:#1D2B45;line-height:1.5;}
+  .qopts{display:flex;flex-direction:column;gap:8px;}
+  .qopt{display:flex;gap:10px;align-items:flex-start;text-align:right;padding:12px 14px;border:2px solid #E3D9C4;
+        border-radius:12px;background:#FFFDF6;color:#1D2B45;font:inherit;font-size:17px;cursor:pointer;width:100%;}
+  .qopt:hover{border-color:#7C5CFF;}
+  .qopt:focus-visible{outline:3px solid #FFD166;outline-offset:2px;}
+  .qopt .key{font-weight:800;color:#7C5CFF;}
+  .qopt.correct{border-color:#1A7F4B;background:#E4F2EA;}
+  .qopt.wrong{border-color:#B3372F;background:#F9E9E7;}
+  .qopt:disabled{cursor:default;}
+  /* נוסחה לעולם לא נשברת בין שתי שורות; תרגיל שהוא לב השאלה מקבל שורה
+     משלו, כמו בספר לימוד (fmtMath מסמן אותו class="mx"). */
+  .qstem bdi,.qopt bdi{white-space:nowrap;}
+  .qstem .qask{display:block;margin-bottom:.35em;}
+  .qstem .vert{display:inline-block;direction:ltr;text-align:left;white-space:pre;
+    font-family:ui-monospace,"SFMono-Regular",Consolas,monospace;font-variant-numeric:tabular-nums;
+    font-size:1.15em;line-height:1.45;background:#F3F6FB;border:1px solid #D8E0EC;
+    border-radius:10px;padding:10px 18px;}
+  .qstem bdi.mx{display:block;text-align:center;margin:.5em auto .1em;font-size:1.06em;}
+  /* אי של **טקסט** (גזע או אפשרות באנגלית) הוא לא נוסחה — הוא חייב להישבר
+     לשורות. בלי זה משפט אנגלי שלם יושב באי אחד עם nowrap, גולש משני צדי
+     הכרטיס ונחתך (נצפה במשחק אמיתי, אוג' 2026: «The scientists made an
+     important ___ about the causes of the disease.»). */
+  .qstem bdi.txt,.qopt bdi.txt,.qfb bdi.txt{white-space:normal;}
+  /* שאלת אנגלית: האפשרויות זורמות משמאל לימין (הן הפריט הנבדק).
+     הגזע נשאר RTL — ב-Pre-A1/A1 ההוראה בעברית (R01), והפריט האנגלי בתוכה
+     מבודד פר-ריצה ב-fmtEnStem. כפיית LTR על הגזע הזיזה את העברית לשמאל
+     והילד פגש את המילה האנגלית ראשונה. */
+  #qOv .panel.en .qopt{direction:ltr;text-align:left;}
+  /* גזע **כולו** אנגלי מיושר לשמאל: אין בו עברית שתיזוז, ופסקה אנגלית
+     מיושרת-ימין קשה לקריאה לילד. גזע מעורב נשאר RTL — שם כפיית LTR הזיזה את
+     ההוראה העברית לשמאל והילד פגש את המילה האנגלית ראשונה. */
+  #qOv .panel.en .qstem.ltr{direction:ltr;text-align:left;}
+  /* אחרי הכיווץ, שאלה נכנסת בשלמותה בכל טלפון רגיל (נמדד: 0 מתוך 710 דורשות
+     גלילה ב-390×844 וב-414×896). במסך קטן במיוחד (360×640) 17 שאלות קריאה
+     ארוכות עדיין גולשות — ושם ילד עלול לא לדעת שיש עוד. הרמז מופיע רק כשיש
+     באמת מה לגלול, ונעלם ברגע שהגיעו לתחתית. */
+  #qOv .panel{position:relative;}
+  #qOv .panel.more{padding-bottom:38px;}   /* שהתגית לא תכסה תשובה */
+  #qOv .panel.more::after{content:"↓ יש עוד למטה";position:sticky;bottom:-14px;align-self:center;
+        background:#7C5CFF;color:#fff;border-radius:999px;padding:5px 14px;font-size:13.5px;font-weight:800;
+        box-shadow:0 4px 12px rgba(15,25,45,.28);pointer-events:none;}
+  /* מסך צר או נמוך: מכווצים את טיפוגרפיית השאלה. שאלת קריאה ארוכה נכנסת
+     כך ברוב המכשירים בלי גלילה בכלל, והגלילה נשארת כרשת ביטחון. */
+  @media (max-width:560px),(max-height:720px){
+    #qOv .panel{padding:20px 18px 18px;gap:9px;}
+    #qOv .qstem{font-size:17px;line-height:1.45;}
+    #qOv .qopt{font-size:15.5px;padding:10px 12px;}
+    #qOv .qchip{font-size:12.5px;padding:3px 10px;}
+  }
+  #qOv .panel.en .qfb .qbtn{align-self:flex-start;}
+  .qnumrow{display:flex;gap:8px;}
+  .qnumrow input{font:inherit;font-size:19px;padding:10px 12px;border:2px solid #E3D9C4;border-radius:12px;width:170px;
+        background:#FFFDF6;color:#1D2B45;direction:ltr;text-align:center;}
+  .qfb{border-radius:12px;padding:12px 14px;font-size:16px;font-weight:700;display:flex;flex-direction:column;gap:8px;}
+  .qfb.ok{background:#E4F2EA;color:#1A7F4B;}
+  .qfb.bad{background:#FFF3D6;color:#8A5A3B;}
+  .qbtn{border:none;border-radius:999px;background:#7C5CFF;color:#fff;font-size:16px;font-weight:800;font-family:inherit;
+        padding:10px 26px;cursor:pointer;box-shadow:0 4px 0 #5F45C9;align-self:flex-start;}
+  .qbtn:active{transform:translateY(2px);box-shadow:0 2px 0 #5F45C9;}
+  /* ---------- age picker ---------- */
+  .grades{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;width:100%;}
+  .gradeBtn{border:2px solid #E3D9C4;background:#FFFDF6;color:#1D2B45;border-radius:12px;padding:10px 0;
+        font:inherit;font-size:18px;font-weight:800;cursor:pointer;}
+  .gradeBtn:hover{border-color:#7C5CFF;}
+  .gradeBtn.sel{background:#7C5CFF;border-color:#7C5CFF;color:#fff;}
+  /* בחירת מקצוע — רק בגרסת «מקצוע אחד» (SUBJECT_PICK) */
+  #subjPick .grades{grid-template-columns:repeat(3,1fr);}
+  #subjPick .gradeBtn{font-size:17px;}
+  #subjPick .gradeBtn:disabled{opacity:.4;cursor:not-allowed;border-color:#E3D9C4;}
+  .bigbtn:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:0 6px 0 #5F45C9;}
+  #ageEcho{font-size:15.5px;color:#3A4A66;min-height:24px;}
+  #ageEcho b{color:#1D2B45;}
+  .linklike{background:none;border:none;font:inherit;font-size:14px;color:#7C5CFF;text-decoration:underline;
+        cursor:pointer;padding:0 4px;}
+  #gradeFixRow{display:none;align-items:center;justify-content:center;gap:8px;font-size:15px;color:#3A4A66;}
+  #gradeFixRow.on{display:flex;}
+  #gradeSel{font:inherit;font-size:16px;padding:6px 10px;border:2px solid #E3D9C4;border-radius:10px;
+        background:#FFFDF6;color:#1D2B45;}
+  /* ---------- auth (Supabase, אופציונלי — מוצג רק כשמוגדר קונפיג) ---------- */
+  .authBox{display:flex;flex-direction:column;gap:8px;width:100%;padding:12px;margin:4px 0;
+        background:#FFFDF6;border:2px solid #E3D9C4;border-radius:14px;box-sizing:border-box;}
+  .authBox input{font:inherit;font-size:15px;padding:8px 10px;border:2px solid #E3D9C4;border-radius:10px;
+        background:#fff;color:#1D2B45;width:100%;box-sizing:border-box;}
+  .authConsentRow{display:flex;align-items:flex-start;gap:8px;font-size:12.5px;color:#3A4A66;
+        cursor:pointer;text-align:right;}
+  .authConsentRow input{width:auto;flex:none;margin-top:3px;}
+  .authBtns{display:flex;gap:8px;flex-wrap:wrap;}
+  .authBtns button{font:inherit;font-size:14px;font-weight:700;border-radius:10px;border:2px solid #E3D9C4;
+        background:#FFFDF6;color:#1D2B45;padding:8px 14px;cursor:pointer;}
+  .authBtns button:hover{border-color:#7C5CFF;}
+  /* הודעה טובה לא נצבעת אדום: "נרשמתם! בדקו את המייל" הוצגה קודם באותו
+     אדום של שגיאה, ולכן נקראה ככישלון. הצבע נקבע לפי .ok/.err/.info. */
+  #authErr,#authErr2,#authErr3{font-size:13px;min-height:16px;color:#D64545;line-height:1.45;}
+  #authErr.ok,#authErr2.ok,#authErr3.ok{color:#1A7F4B;}
+  #authErr.info,#authErr2.info,#authErr3.info{color:#3A4A66;}
+  .authBox h2{font-size:19px;margin:0;color:#1D2B45;}
+  #authLead,#authRecLead{font-size:13.5px;color:#5A6B7C;margin:0 0 2px;}
+  .authBtns button.authPrimary{background:#7C5CFF;border-color:#6B4BE0;color:#fff;}
+  .authBtns button.authPrimary:hover{background:#6B4BE0;}
+  .authBtns button.authPrimary:disabled{opacity:.55;cursor:default;}
+  .authSwitchRow{font-size:13px;color:#5A6B7C;display:flex;gap:6px;align-items:baseline;flex-wrap:wrap;}
+  .authSwitchRow .linklike{font-size:13px;padding:0;}
+  #authBox.hidden,#authLoggedOut.hidden,#authNeedsProfile.hidden,#authLoggedIn.hidden,
+  #authRecovery.hidden,#authForgot.hidden,#playGate.hidden,#kidPicker.hidden,#subjPick.hidden{display:none;}
+  #authWho{font-size:14px;color:#3A4A66;}
+  #authLoggedIn{display:flex;flex-direction:column;align-items:stretch;gap:8px;}
+  .authRow{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+  /* ---------- מי משחק/ת עכשיו (אחים באותו חשבון) ---------- */
+  #kidWho{font-size:15px;color:#3A4A66;}
+  #kidWho b{color:#1D2B45;}
+  #kidPicker{display:flex;flex-direction:column;gap:8px;padding-top:8px;
+        border-top:2px dashed #E3D9C4;}
+  #kidList{display:flex;flex-direction:column;gap:6px;}
+  .kidBtn{font:inherit;font-size:15px;font-weight:800;border-radius:10px;border:2px solid #E3D9C4;
+        background:#FFFDF6;color:#1D2B45;padding:8px 12px;cursor:pointer;text-align:right;}
+  .kidBtn:hover{border-color:#7C5CFF;}
+  .kidBtn.sel{background:#7C5CFF;border-color:#7C5CFF;color:#fff;}
+  #kidHint{font-size:12.5px;color:#5A6B7C;line-height:1.45;margin:0;}
+  #authErr4{font-size:13px;min-height:16px;color:#D64545;line-height:1.45;}
+  #authErr4.ok{color:#1A7F4B;}
+  #authErr4.info{color:#3A4A66;}
+  /* ---------- report ---------- */
+  #repOv .panel{max-width:720px;text-align:right;align-items:stretch;gap:12px;max-height:88vh;overflow:auto;}
+  #repOv h1{font-size:28px;text-align:center;}
+  .repThread{background:#FFFDF6;border:2px solid #E3D9C4;border-radius:14px;padding:12px 14px;
+        display:flex;flex-direction:column;gap:8px;}
+  .repHead{display:flex;align-items:baseline;gap:10px;}
+  .repHead b{font-size:18px;}
+  .repScore{margin-inline-start:auto;font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;color:#7C5CFF;}
+  .repNode{display:flex;align-items:center;gap:8px;font-size:14.5px;color:#3A4A66;}
+  .repNode .dot{width:12px;height:12px;border-radius:4px;flex:none;border:2px solid transparent;}
+  .repNode.advanced .dot,.repNode.core .dot{background:#1A7F4B;}
+  .repNode.basic .dot{background:#E0A94E;}
+  .repNode.below_basic .dot{background:#B3372F;}
+  .repNode.not_assessed .dot{background:#EDF0F2;border-color:#D8DFE4;}
+  .repNode .st{margin-inline-start:auto;font-size:12.5px;font-weight:700;}
+  .repNode .inf{font-size:11.5px;color:#8A98A6;font-weight:600;}
+  .repMis{border-inline-start:4px solid #B3372F;background:#F9E9E7;border-radius:8px;padding:7px 11px;font-size:14px;color:#3A4A66;}
+  .repMis b{display:block;color:#1D2B45;}
+  .repSubj{display:flex;align-items:center;gap:9px;font-size:19px;font-weight:800;color:#1D2B45;margin-top:8px;}
+  .repSubj:after{content:"";flex:1;height:2px;background:#E3D9C4;border-radius:2px;}
+  @media (prefers-reduced-motion: reduce){ .overlay,.bigbtn,#toast span{transition:none;} }
+</style>
+
+<canvas id="game"></canvas>
+
+<div id="hud">
+  <div class="chip" id="worldChip">🌳 <b>עולם 1/3</b></div>
+  <div class="chip">🧊 <b id="hudCubes">0</b><small>קוביות</small></div>
+  <div class="chip">🍬 <b id="hudCandy">0</b><small>נקודות</small></div>
+  <div class="chip" id="starChip">⭐ <b id="hudStars">0</b><small>כוכבים</small></div>
+  <div class="chip" id="wingChip" style="display:none;background:rgba(124,92,255,.9);">🪶 <b id="hudWings">0</b><small>שנ׳</small></div>
+  <div id="hudBtns">
+    <button id="muteBtn" title="השתקה">🔊</button>
+    <button id="unstickBtn" title="נתקעתי — חזרה לנקודת הביניים">🆘</button>
+    <button id="restartBtn" title="התחלה מחדש">⟳</button>
+  </div>
+</div>
+
+<div id="toast"><span id="toastMsg"></span></div>
+
+<div id="touch">
+  <div class="grp"><button id="tL">◀</button><button id="tR">▶</button></div>
+  <div class="grp"><button id="tJ">⤒</button></div>
+</div>
+
+<div class="overlay" id="introOv">
+  <div class="panel">
+    <h1><span class="cube">🧊</span> מסע הקוביות</h1>
+    <p>כל קוביית קסם שומרת שאלה! עונים נכון — הקובייה שלכם, והיא נמתחת לקרש בגשר.
+       בכל עולם מחכה נושא אחר, והשאלות מתאימות את עצמן בדיוק אליכם.</p>
+    <div class="subjRow">
+      <span>📚 עברית</span><span>🔢 מתמטיקה</span><span>🔤 אנגלית</span>
+    </div>
+    <div class="authBox hidden" id="authBox">
+      <div id="authLoggedOut">
+        <!-- מצב אחד בכל רגע (הרשמה או כניסה), עם כותרת שאומרת מה עומד לקרות.
+             שני כפתורים שווים בלי כותרת השאירו את ההורה בלי דרך לדעת אם נוצר
+             חשבון או לא — ראו הערת authMode ב-JS. -->
+        <h2 id="authTitle">יצירת חשבון להורה</h2>
+        <p id="authLead"></p>
+        <input type="email" id="authEmail" placeholder="אימייל" autocomplete="email">
+        <input type="password" id="authPass" placeholder="סיסמה (לפחות 6 תווים)" autocomplete="new-password">
+        <div class="authBtns">
+          <button type="button" id="authGo" class="authPrimary">יצירת חשבון</button>
+          <button type="button" class="linklike hidden" id="authForgot">שכחתי סיסמה</button>
+        </div>
+        <div id="authErr"></div>
+        <div class="authSwitchRow">
+          <span id="authSwitchQ"></span>
+          <button type="button" class="linklike" id="authSwitch"></button>
+        </div>
+      </div>
+      <div id="authRecovery" class="hidden">
+        <!-- הקישור מהמייל פותח כאן טופס אמיתי. פתיחת הקישור לבדה אינה מחליפה
+             סיסמה — זו בדיוק התקלה שקרתה מול הדשבורד (SESSION-SUMMARY §5). -->
+        <h2>בחירת סיסמה חדשה</h2>
+        <p id="authRecLead"></p>
+        <input type="password" id="authNewPass" placeholder="סיסמה חדשה (לפחות 6 תווים)" autocomplete="new-password">
+        <div class="authBtns">
+          <button type="button" id="authSetPass" class="authPrimary">שמירת הסיסמה</button>
+        </div>
+        <div id="authErr3"></div>
+      </div>
+      <div id="authNeedsProfile" class="hidden">
+        <p style="font-size:13.5px;color:#5A6B7C;margin:0 0 4px;">כמעט סיימנו — עוד פרט אחד:</p>
+        <input type="text" id="authChildName" placeholder="שם הילד/ה">
+        <label class="authConsentRow">
+          <input type="checkbox" id="authConsent">
+          <span>מאשר/ת שאני ההורה/האפוטרופוס של הילד/ה, ומסכים/ה לשמירת נתוני ההתקדמות
+            שלו/ה בענן לצורך המיפוי והדוח.</span>
+        </label>
+        <div class="authBtns">
+          <button type="button" id="authFinishProfile">המשך</button>
+        </div>
+        <div id="authErr2"></div>
+      </div>
+      <div id="authLoggedIn" class="hidden">
+        <!-- חשבון אחד = הורה אחד, אבל ילדים אחדים. בלי השורה הזאת האח השני
+             שיחק תחת השם והכיתה של הראשון, וכל הדוחות נשמרו על אותו שם. -->
+        <div class="authRow">
+          <span id="authWho"></span>
+          <button type="button" class="linklike" id="authSignOut">התנתקות</button>
+        </div>
+        <div class="authRow">
+          <span id="kidWho"></span>
+          <span>
+            <button type="button" class="linklike" id="kidSwitchBtn">החלפה / הוספת ילד/ה</button>
+            <button type="button" class="linklike" id="myReportsBtn">📊 הדוחות שלי</button>
+          </span>
+        </div>
+        <div id="kidPicker" class="hidden">
+          <div id="kidList"></div>
+          <p id="kidHint">כל ילד/ה מקבל/ת מיפוי, התקדמות ודוח נפרדים — והכיתה נבחרת
+            מחדש בתחילת המשחק.</p>
+          <input type="text" id="kidNewName" placeholder="שם של ילד/ה נוסף/ת">
+          <div class="authBtns">
+            <button type="button" id="kidAdd" class="authPrimary">משחק חדש בשם הזה</button>
+            <button type="button" class="linklike" id="kidCancel">ביטול</button>
+          </div>
+          <div id="authErr4"></div>
+        </div>
+      </div>
+    </div>
+    <div class="worlds" id="worldsRow"></div>
+    <div id="playGate">
+      <button class="bigbtn" id="resumeBtn" style="display:none;background:#2EC4B6;box-shadow:0 6px 0 #1E8F86;">▶ להמשיך</button>
+      <div id="subjPick" class="hidden">
+        <p style="font-weight:800;">מה משחקים היום?</p>
+        <div class="grades" id="subjBtns"></div>
+      </div>
+      <p style="font-weight:800;">בני כמה אתם?</p>
+      <div class="grades" id="agePick"></div>
+      <div id="ageEcho">בחרו גיל — ונתאים לכם את השאלות 🎯</div>
+      <div id="gradeFixRow">
+        <span>אני בכיתה</span>
+        <select id="gradeSel"></select>
+      </div>
+      <div class="keys">
+        <span><b>→</b><b>←</b> תזוזה</span>
+        <span><b>רווח</b> קפיצה</span>
+        <span><b>R</b> חזרה לנקודת ביניים</span>
+      </div>
+      <button class="bigbtn" id="startBtn" disabled>יוצאים לדרך!</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="winOv">
+  <div class="panel">
+    <h1 id="winTitle">🏆 כל הכבוד!</h1>
+    <p id="winSub">חציתם את כל הגשרים והגעתם אל הדגל!</p>
+    <div class="stats">
+      <div class="stat"><b id="stCandy">0</b><small>🍬 נקודות</small></div>
+      <div class="stat"><b id="stCubes">0</b><small>🧊 קוביות נאספו</small></div>
+      <div class="stat"><b id="stStars">0/8</b><small>⭐ כוכבים סודיים</small></div>
+      <div class="stat"><b id="stTime">0:00</b><small>⏱ זמן</small></div>
+    </div>
+    <p id="winNote" style="font-size:14.5px;color:#5A6B7C;"></p>
+    <!-- אין כאן כפתור דוח בכוונה (החלטת שני, אוג' 2026): הילד שמשחק לא מקבל
+         פירוט/ציונים בשום מסך. הדוח המלא נשמר ל-Supabase (authPushFinished)
+         ונגיש רק להורה, דרך «הדוחות שלי» בתיבת ההתחברות — ראו showMyReports(). -->
+    <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;">
+      <button class="bigbtn" id="againBtn">עוד פעם!</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="brOv">
+  <div class="panel">
+    <h1>🌉 חסרות קוביות לגשר</h1>
+    <p id="brText"></p>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;">
+      <button class="bigbtn" id="brAsk">📝 לענות על שאלה</button>
+      <button class="bigbtn" id="brBack" style="background:#2EC4B6;box-shadow:0 6px 0 #1E8F86;">🧊 לחזור לאסוף קוביות</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="repOv">
+  <div class="panel">
+    <h1>🗺️ מפת הידע</h1>
+    <p id="repSub" style="text-align:center;"></p>
+    <div id="repBody"></div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;">
+      <button class="bigbtn" id="repDl" style="background:#2EC4B6;box-shadow:0 6px 0 #1E8F86;">📥 הורדת הדוח (JSON)</button>
+      <button class="bigbtn" id="repClose" style="background:#8A98A6;box-shadow:0 6px 0 #66727E;">חזרה</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="qOv">
+  <div class="panel">
+    <div class="qchips" id="qChips"></div>
+    <div class="qstem" id="qStem"></div>
+    <div id="qBody"></div>
+    <div id="qFb"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- מאגר השאלות, מקצוע לקובץ. נוצרים ע"י build_game.py ומוגשים לצד ה-HTML.
+     `<script src>` ולא fetch/JSON — נמדד: fetch חסום מדף file:// וכל הבדיקות
+     והמשחק המקומי נפתחים כך. הסדר כאן אינו קובע; המיזוג ממיין בעצמו. -->
+<script src="bank8_hebrew.js"></script>
+<script src="bank8_math.js"></script>
+<script src="bank8_english.js"></script>
+<script>
+"use strict";
+/* =========================================================================
+   מסע הקוביות — משחק + מיפוי אדפטיבי (שיחה 3)
+   -------------------------------------------------------------------------
+   תבנית: build_game.py (ב-Question Bank) מזריק לכאן את נתוני המשחק —
+   (אין לכתוב כאן את שם המציין עצמו: ה-replace מחליף גם בתוך ההערה, וכל
+    מאגר השאלות נדחס פעמיים לקובץ — 670KB קוד מת, ושאלה עתידית שיש בה סוגר
+    הערה תסגור אותה מוקדם ותפיל את המשחק בשגיאת תחביר)
+   3 שרשראות (עולם=נושא) + כל שאלות המתמטיקה (mc/numeric, ללא needs_image).
+   כל נגיעה בקובייה עוברת דרך questionGate(): מודאל שאלה, מנוע אדפטיבי
+   (התחלה בליבת הכיתה הקודמת, עלייה/ירידה עד גבול הידע, ניסיון שני במדרגה),
+   grant() רק על תשובה נכונה. בסוף: דוח knowledge_state + אבחנות (JSON).
+   ========================================================================= */
+
+const GAME_DATA={};
+/* מיזוג שלושת קובצי המאגר לתוך GAME_DATA. שאר הקוד ממשיך לקרוא
+   GAME_DATA.threads / GAME_DATA.questions בדיוק כמו קודם — הפיצול הוא
+   בקבצים, לא בממשק. הסדר משוחזר במפורש: השרשראות לפי thread_order (הסדר
+   שהמנוע נבנה סביבו) והשאלות לפי question_id, כך שהתוצאה זהה לבנייה
+   המוטבעת שקדמה לה ובחירת השאלה נשארת יציבה בין בניות. */
+(function mergeBank(){
+  /* מאגר הליבה: שלושה קבצים, שרשרת אחת לכל מקצוע, תחנה = כיתה שלמה.
+     המטא (מסלול העולמות) נוסע עם הקובץ העברי — הראשון שנטען. */
+  const B=window.QBANK8||{}, subjects=["hebrew","math","english"];
+  const threads=[], questions=[], missing=[];
+  for(const s of subjects){
+    const b=B[s];
+    if(!b||!b.threads||!b.questions){ missing.push(s); continue; }
+    threads.push(...b.threads); questions.push(...b.questions);
+    if(b.meta){ GAME_DATA.world_plan=b.meta.world_plan; GAME_DATA.subject_he=b.meta.subject_he; }
+  }
+  const pos=new Map(subjects.map((id,i)=>[id,i]));
+  threads.sort((a,b)=>pos.get(a.id)-pos.get(b.id));
+  GAME_DATA.threads=threads; GAME_DATA.questions=questions;
+  /* אינדקס לפי מזהה: התחנה מחזיקה רשימת מזהים בסדר עדיפות, והשליפה
+     מתוכה חייבת להיות O(1) ולא סריקה של המאגר בכל שאלה. */
+  GAME_DATA.byId={};
+  for(const q of questions) GAME_DATA.byId[q.question_id]=q;
+  if(missing.length){
+    GAME_DATA.bank_missing=missing;
+    console.error("קובצי מאגר חסרים: "+missing.map(s=>"bank8_"+s+".js").join(", "));
+  }
+})();
+
+/* ---------- Supabase ----------
+   אותו מנגנון placeholder כמו למעלה, מוזרק ע"י build_game.py מתוך
+   Supabase/local_config.json (ראו Supabase/README.md). כשלא הוגדר קונפיג —
+   הערך הוא null וכל הבלוק הזה no-op: המשחק מתנהג כמו לפני הסבב הזה,
+   localStorage בלבד, בלי שום קריאת רשת, ו**בלי חסימת התחברות** — זה מצב
+   פיתוח/בדיקות בלבד (כל הטסטים ב-Game\tests\ רצים ככה). ברגע שיש קונפיג,
+   התחברות היא חובה לשחק (החלטת מוצר 2026-08-05): playGate נשאר סגור עד
+   שיש authUser. כל קריאה ל-Supabase עטופה ב-try/catch ולעולם לא זורקת
+   באמצע לולאת המשחק — כשל רשת נופל בשקט. */
+const SUPABASE_CONFIG={"url": "https://godrtcfhlgwboueqtvuw.supabase.co", "anonKey": "sb_publishable_2jVr9u3TFcJG46zwVT1rLQ_TVV5JcSM"};
+const sb=(SUPABASE_CONFIG&&window.supabase)
+  ?window.supabase.createClient(SUPABASE_CONFIG.url,SUPABASE_CONFIG.anonKey)
+  :null;
+let authUser=null, authStudentId=null, authStudentName=null, authRunId=null;
+/* רשימת הילדים של ההורה המחובר, וזכירת מי נבחר/ה אחרון/ה **במכשיר הזה**
+   (המפתח כולל את מזהה ההורה, כדי שמכשיר משותף לא יציע ילד של חשבון אחר). */
+let authStudents=[];
+const STUDENT_KEY="cq_student_v1";
+
+function authSay(id,msg,kind){ const e=$(id); if(!e) return;
+  e.textContent=msg||""; e.className=msg?(kind||"err"):""; }
+function authSetErr(msg,kind){ authSay("authErr",msg,kind); }
+function authSetErr2(msg,kind){ authSay("authErr2",msg,kind); }
+function authSetErr3(msg,kind){ authSay("authErr3",msg,kind); }
+function authSetErr4(msg,kind){ authSay("authErr4",msg,kind); }
+
+/* Supabase מחזיר סיבה מדויקת לכל כישלון, והיא נבלעה קודם והוחלפה במשפט
+   אחד ("לבדוק אימייל/סיסמה"). אותו טקסט תיאר סיסמה קצרה, מייל שלא אושר,
+   חשבון שכבר קיים ומכסת מיילים שנגמרה — ארבע פעולות שונות לגמרי מצד
+   ההורה, ואף אחת מהן לא "לבדוק את הסיסמה". */
+function authErrText(e){
+  const code=(e&&(e.code||e.error_code))||"";
+  const msg=String((e&&e.message)||"");
+  const has=s=>msg.toLowerCase().includes(s);
+  if(code==="invalid_credentials"||has("invalid login"))
+    return "אימייל או סיסמה לא נכונים. אם שכחתם — לחצו «שכחתי סיסמה».";
+  if(code==="email_not_confirmed"||has("email not confirmed"))
+    return "החשבון קיים, אבל המייל עדיין לא אושר. חפשו את מייל האישור (גם בתיקיית הספאם) ולחצו על הקישור שבו.";
+  if(code==="user_already_exists"||has("already registered"))
+    return "האימייל הזה כבר רשום. עברו ל«כניסה» עם הסיסמה שבחרתם.";
+  if(code==="weak_password"||has("at least 6")||has("password should be"))
+    return "הסיסמה קצרה מדי — צריך לפחות 6 תווים.";
+  if(code==="over_email_send_rate_limit"||has("rate limit")||(e&&e.status===429))
+    return "נשלחו יותר מדי מיילים בזמן קצר. המתינו כשעה ונסו שוב.";
+  if(code==="validation_failed"||has("invalid email"))
+    return "כתובת האימייל לא תקינה.";
+  return msg?("לא הצלחנו — "+msg):"משהו השתבש. נסו שוב בעוד רגע.";
+}
+
+/* מצב אחד בכל רגע. שני כפתורים שווים ("כניסה" / "הרשמה") מתחת לאותו טופס
+   לא אמרו להורה מה עומד לקרות ולא מה קרה — ולכן גם לא אם נוצר חשבון. */
+let authMode="signup", authRecovering=false;
+const AUTH_MODE_UI={
+  signup:{title:"יצירת חשבון להורה",
+    lead:"החשבון נפתח על שם ההורה, לא על שם הילד/ה — הוא מה ששומר את ההתקדמות ומאפשר להמשיך ממכשיר אחר.",
+    go:"יצירת חשבון", q:"כבר יש לכם חשבון?", sw:"לכניסה",
+    ac:"new-password", ph:"סיסמה (לפחות 6 תווים)"},
+  signin:{title:"כניסה לחשבון קיים",
+    lead:"נכנסים עם האימייל והסיסמה של ההורה.",
+    go:"כניסה", q:"עדיין אין לכם חשבון?", sw:"ליצירת חשבון",
+    ac:"current-password", ph:"סיסמה"}
+};
+function authSetMode(m){
+  authMode=m; const u=AUTH_MODE_UI[m];
+  $("authTitle").textContent=u.title;
+  $("authLead").textContent=u.lead;
+  $("authGo").textContent=u.go;
+  $("authSwitchQ").textContent=u.q;
+  $("authSwitch").textContent=u.sw;
+  $("authPass").setAttribute("autocomplete",u.ac);
+  $("authPass").placeholder=u.ph;
+  $("authForgot").classList.toggle("hidden",m!=="signin");
+  authSetErr("");
+}
+function authBusy(on,label){
+  const b=$("authGo"); if(!b) return;
+  b.disabled=!!on; b.textContent=on?label:AUTH_MODE_UI[authMode].go;
+}
+function authCreds(){
+  const email=$("authEmail").value.trim(), pass=$("authPass").value;
+  if(!email){ authSetErr("צריך למלא אימייל."); return null; }
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ authSetErr("כתובת האימייל לא תקינה."); return null; }
+  if(!pass){ authSetErr("צריך למלא סיסמה."); return null; }
+  if(authMode==="signup"&&pass.length<6){ authSetErr("הסיסמה קצרה מדי — צריך לפחות 6 תווים."); return null; }
+  return {email:email,pass:pass};
+}
+/* פרופיל "מוכן" = יש students וגם profiles.consent_given — נבדק מול ה-DB
+   בכל פעם (לא נשען על משתנה זיכרון), כדי שזרימת אימות מייל תעבוד נכון:
+   מי שנרשם, אישר במייל בטאב/מכשיר אחר וחזר — מגיע הנה עם authUser טרי
+   ובלי שום state קודם, וצריך עדיין לראות את צעד "שם הילד/ה + הסכמה". */
+async function authProfileReady(){
+  if(!sb||!authUser) return false;
+  try{
+    const [{data:prof},{data:stu}]=await Promise.all([
+      sb.from("profiles").select("consent_given").eq("id",authUser.id).single(),
+      sb.from("students").select("id").eq("parent_id",authUser.id).limit(1)
+    ]);
+    return !!(prof&&prof.consent_given&&stu&&stu.length);
+  }catch(e){ return false; }
+}
+async function authRefreshGate(){
+  if(!sb) return;                 // בלי קונפיג: playGate נשאר פתוח כברירת מחדל (HTML), כמו היום
+  /* איפוס סיסמה קודם לכל: הקישור מהמייל יוצר session אמיתי, ולכן בלי
+     הענף הזה ההורה היה נוחת ישר במשחק — והסיסמה שלא ידע נשארת מה שהיא. */
+  if(authRecovering&&authUser){
+    $("authLoggedOut").classList.add("hidden");
+    $("authNeedsProfile").classList.add("hidden");
+    $("authLoggedIn").classList.add("hidden");
+    $("authRecovery").classList.remove("hidden");
+    $("playGate").classList.add("hidden");
+    $("authRecLead").textContent="בחרו סיסמה חדשה לחשבון "+(authUser.email||"")+
+      ". עד שתשמרו אותה כאן — הסיסמה לא באמת השתנתה.";
+    return;
+  }
+  $("authRecovery").classList.add("hidden");
+  if(!authUser){
+    $("authLoggedOut").classList.remove("hidden");
+    $("authNeedsProfile").classList.add("hidden");
+    $("authLoggedIn").classList.add("hidden");
+    $("playGate").classList.add("hidden");
+    return;
+  }
+  const ready=await authProfileReady();
+  $("authLoggedOut").classList.add("hidden");
+  $("authNeedsProfile").classList.toggle("hidden",ready);
+  $("authLoggedIn").classList.toggle("hidden",!ready);
+  $("playGate").classList.toggle("hidden",!ready);
+  if(ready){
+    $("authWho").textContent=`מחוברים כ-${authUser.email}`;
+    await authLoadStudents();
+    await authEnsureStudent();
+    renderKidRow(); renderKidList();
+  }
+}
+/* ---------- כמה ילדים לאותו חשבון ----------
+   הסכמה תמכה בזה מהיום הראשון (students.parent_id אינו ייחודי), אבל ה-UI
+   בחר תמיד את הילד/ה **האחרון/ה שנוצר/ה** ולא נתן דרך להוסיף עוד אחד —
+   ולכן אח שני שיחק תחת השם של הראשון, ירש את הכיתה שלו מהשמירה, ודרס לו
+   את שורת ההרצה בענן. עכשיו: בחירה מפורשת, שמירה נפרדת לכל ילד/ה, והשם
+   נכנס גם לדוח (report.student.name) כדי שהקובץ המיוצא יידע של מי הוא. */
+function storeStudentChoice(){
+  try{ localStorage.setItem(STUDENT_KEY,JSON.stringify(
+    {p:authUser?authUser.id:null, s:authStudentId, n:authStudentName})); }catch(e){}
+}
+function readStudentChoice(){
+  try{ const o=JSON.parse(localStorage.getItem(STUDENT_KEY)||"null");
+       return (o&&authUser&&o.p===authUser.id&&o.s)?o:null; }catch(e){ return null; }
+}
+async function authLoadStudents(){
+  authStudents=[];
+  if(!sb||!authUser) return authStudents;
+  try{
+    const {data}=await sb.from("students").select("id,name,created_at")
+      .eq("parent_id",authUser.id).order("created_at",{ascending:false});
+    authStudents=(data||[]).map(r=>({id:r.id,name:r.name}));
+  }catch(e){}
+  return authStudents;
+}
+async function authCreateStudent(name){
+  if(!sb||!authUser||!name) return null;
+  try{
+    const {data,error}=await sb.from("students")
+      .insert({parent_id:authUser.id,name}).select("id,name").single();
+    if(error) throw error;
+    authStudents.unshift({id:data.id,name:data.name});
+    return data;
+  }catch(e){ return null; }
+}
+async function authEnsureStudent(name){
+  /* מחזירה את מזהה הילד/ה **הנבחר/ת**: קודם בחירה מפורשת בסשן הזה, אחריה
+     הבחירה השמורה במכשיר, ורק אז הילד/ה האחרון/ה שנוצר/ה. name נדרש רק
+     כשאין אף ילד/ה בחשבון (צעד ההרשמה). */
+  if(!sb||!authUser) return null;
+  if(authStudentId) return authStudentId;
+  try{
+    if(!authStudents.length) await authLoadStudents();
+    const saved=readStudentChoice();
+    const pick=(saved&&authStudents.find(s=>s.id===saved.s))||authStudents[0]||null;
+    if(pick){ authStudentId=pick.id; authStudentName=pick.name; storeStudentChoice(); return authStudentId; }
+    if(!name) return null;        // אין ילד קיים ואין שם חדש לספק — לא יוצרים בשקט
+    const created=await authCreateStudent(name);
+    if(!created) return null;
+    authStudentId=created.id; authStudentName=created.name; storeStudentChoice();
+    return authStudentId;
+  }catch(e){ return null; }
+}
+function renderKidRow(){
+  const who=$("kidWho"); if(!who) return;
+  who.innerHTML="משחק/ת עכשיו: <b></b>";
+  who.querySelector("b").textContent=authStudentName||"—";
+}
+function renderKidList(){
+  const box=$("kidList"); if(!box) return;
+  box.innerHTML="";
+  authStudents.forEach(st=>{
+    const b=document.createElement("button");
+    b.type="button";
+    b.className="kidBtn"+(st.id===authStudentId?" sel":"");
+    b.textContent=(st.id===authStudentId?"✓ ":"")+st.name;
+    b.onclick=()=>authSelectStudent(st.id,st.name);
+    box.appendChild(b);
+  });
+}
+/* מעבר לילד/ה אחר/ת = מפגש אחר לגמרי: הרצה חדשה בענן (authRunId=null),
+   בלי השמירה המקומית של האח/ות, ובלי הגיל/הכיתה שנבחרו קודם — הכיתה של
+   האח הראשון נשמרה ונדבקה לשני, וזאת בדיוק התקלה שדווחה. */
+async function authSelectStudent(id,name){
+  const same=(id===authStudentId);
+  authStudentId=id; authStudentName=name; authRunId=null;
+  storeStudentChoice();
+  $("kidPicker").classList.add("hidden");
+  authSetErr4("");
+  if(!same){
+    clearProgress(); session=null;
+    resetAgePick();
+    await authPullLatest();      // ההרצה הפתוחה של הילד/ה הזה, אם יש
+  }
+  renderKidRow(); renderKidList();
+  refreshResumeBtn();
+  if(!same) showToast("עכשיו משחק/ת: "+name+" 🎮",2600);
+}
+/* game_runs נגיש להורה (RLS "השורה שלי"), ולכן חייב להכיל **רק** יומן
+   גולמי — לא ציון/מדרגה/ודאות מחושבים. result על כל thread הוא בדיוק זה
+   (finishThread), אז הוא לא נשלח לענן; localStorage המקומי כן שומר אותו
+   במלואו (שם אין בעיית הרשאות — זה המכשיר של אותו משתמש). */
+function stripAdminFields(o){
+  return Object.assign({},o,{
+    threads:o.threads.map(t=>{ const {result,...rest}=t; return rest; })
+  });
+}
+async function authPushSave(o){
+  if(!sb||!authUser) return;
+  try{
+    const studentId=await authEnsureStudent();
+    if(!studentId) return;
+    const cloudState=stripAdminFields(o);
+    if(!authRunId){
+      const {data,error}=await sb.from("game_runs")
+        .insert({student_id:studentId,parent_id:authUser.id,state:cloudState}).select("id").single();
+      if(error) throw error;
+      authRunId=data.id;
+    }else{
+      const {error}=await sb.from("game_runs").update({state:cloudState}).eq("id",authRunId);
+      if(error) throw error;
+    }
+  }catch(e){}
+}
+async function authPushFinished(rep){
+  /* נקרא ברגע שהמיפוי האמיתי נגמר (לפני עולם הבונוס, ראו completeStage) —
+     בלי תלות בילד שפותח מסך כלשהו. rep נשלח כפרמטר לפונקציית RPC
+     (submit_report), שהיא הדרך היחידה שמידע נכתב ל-reports — ה-client
+     לעולם לא כותב לטבלה ישירות (ראו schema.sql §4). ההורה כן יכול לקרוא
+     את זה בחזרה עכשיו (reports_parent_read), אבל רק לקרוא — לא לכתוב.
+     אידמפוטנטי-ברובו: קריאה חוזרת מוסיפה שורת reports נוספת (לא upsert),
+     ולכן שני הניסיונות למטה לא רצים במקביל — הראשון חייב להיכשל לפני השני.
+     שני ניסיונות ולא יותר: כדי ש"הדוח של כל תלמיד יישמר" לא ייפול על כשל
+     רשת חד-פעמי, בלי לתלות את חוויית המשחק אם הרשת באמת למטה. גם בלי
+     submit_report מוצלח, היומן הגולמי כבר ב-game_runs (saveProgress בכל
+     עולם) — שום דבר לא אבד, רק הדוח המחושב חסר עד שינוי-חוזר. */
+  if(!sb||!authUser||!session) return;
+  if(!authRunId) await authPushSave(buildSaveObj());
+  if(!authRunId) return;
+  for(let attempt=0;attempt<2;attempt++){
+    try{
+      const {error}=await sb.rpc("submit_report",{p_run_id:authRunId,p_report:rep});
+      if(!error){
+        /* ההרצה נסגרת ברגע שהמיפוי נגמר, כדי ש«להמשיך» של הילד/ה הזה לא
+           יציע בביקור הבא מפגש שכבר הסתיים (עולם הבונוס ממשיך לשמור state
+           לאותה שורה — רק הסטטוס משתנה). */
+        try{ await sb.from("game_runs").update({status:"finished"}).eq("id",authRunId); }catch(e2){}
+        return;
+      }
+    }catch(e){}
+    if(attempt===0) await new Promise(r=>setTimeout(r,2000));
+  }
+}
+async function authPullLatest(){
+  if(!sb||!authUser) return;
+  try{
+    /* מסונן לפי הילד/ה הנבחר/ת: בלי זה ההורה של שני אחים קיבל תמיד את
+       ההרצה האחרונה בחשבון — כלומר את המשחק של האח/ות. */
+    const studentId=await authEnsureStudent();
+    let q=sb.from("game_runs").select("id,state,updated_at")
+      .eq("parent_id",authUser.id).eq("status","in_progress");
+    if(studentId) q=q.eq("student_id",studentId);
+    /* מסננים אחרי השליפה ולא ב-limit(1): ההרצה האחרונה עשויה להיות של
+       הגרסה האחרת (מלאה / מקצוע אחד), ואז היא אינה «להמשיך» כאן. */
+    const {data:rows}=await q.order("updated_at",{ascending:false}).limit(10);
+    const data=(rows||[]).filter(r=>saveFitsMode(r.state)).slice(0,1);
+    let local=null;
+    try{ const raw=localStorage.getItem(SAVE_KEY); local=raw?JSON.parse(raw):null; }catch(e){}
+    if(data&&data.length){
+      const row=data[0], cloud=Object.assign({},row.state,{runId:row.id,studentId:studentId});
+      if(!local||(cloud.ts||0)>=(local.ts||0)){
+        try{ localStorage.setItem(SAVE_KEY,JSON.stringify(cloud)); }catch(e){}
+      }
+    }else if(local&&studentId&&local.studentId&&local.studentId!==studentId){
+      clearProgress();   // השמירה במכשיר שייכת לאח/ות — לא «להמשיך» של הילד/ה הזה
+    }
+  }catch(e){}
+  refreshResumeBtn();
+}
+async function authInit(){
+  if(!sb) return;
+  /* זיהוי קישור-האיפוס מה-URL עצמו ולא רק מאירוע PASSWORD_RECOVERY:
+     supabase-js עשוי לצרוך את ה-hash לפני שהמאזין נרשם, ואז האירוע חומק. */
+  try{
+    const h=new URLSearchParams(String(location.hash||"").replace(/^#/,""));
+    if(h.get("type")==="recovery") authRecovering=true;
+  }catch(e){}
+  try{
+    const {data:{session:s}}=await sb.auth.getSession();
+    authUser=s?s.user:null;
+  }catch(e){}
+  authSetMode("signup");
+  await authRefreshGate();
+  if(authUser&&!authRecovering) authPullLatest();
+  sb.auth.onAuthStateChange(async(ev,s)=>{
+    if(ev==="PASSWORD_RECOVERY") authRecovering=true;
+    if(ev==="SIGNED_OUT") authRecovering=false;
+    authUser=s?s.user:null; authStudentId=null; authRunId=null;
+    await authRefreshGate();
+    if(authUser&&!authRecovering) authPullLatest(); else if(!authUser) refreshResumeBtn();
+  });
+  $("authBox").classList.remove("hidden");
+  $("authSwitch").onclick=()=>authSetMode(authMode==="signup"?"signin":"signup");
+  $("authGo").onclick=async()=>{
+    authSetErr("");
+    const c=authCreds(); if(!c) return;
+    authBusy(true,authMode==="signup"?"יוצרים חשבון…":"נכנסים…");
+    try{
+      if(authMode==="signin"){
+        const {error}=await sb.auth.signInWithPassword({email:c.email,password:c.pass});
+        if(error) throw error;
+        authSetErr("נכנסתם 🎉","ok");
+      }else{
+        /* emailRedirectTo מפורש: בלעדיו Supabase מחזיר את ההורה ל-Site URL
+           של הפרויקט, ואם הוא לא כולל את /cube-quest/ — הקישור מהמייל נוחת
+           על שגיאת 404 של GitHub ("דף ריק"). קרה בפועל, 6.8.26. הכתובת
+           חייבת להיות גם ברשימת Redirect URLs, אחרת Supabase מתעלם ממנה
+           וחוזר ל-Site URL. */
+        const {data,error}=await sb.auth.signUp({email:c.email,password:c.pass,
+          options:{emailRedirectTo:location.origin+location.pathname}});
+        if(error) throw error;
+        /* מייל שכבר רשום אינו מחזיר שגיאה (Supabase מסתיר קיום חשבונות),
+           אלא user עם identities ריק. בלי הבדיקה הזאת ההורה מקבל "בדקו את
+           המייל" על מייל שמעולם לא נשלח, ומחכה לו לנצח. */
+        const known=data&&data.user&&Array.isArray(data.user.identities)&&data.user.identities.length===0;
+        if(known){
+          authSetMode("signin");
+          authSetErr("האימייל הזה כבר רשום. היכנסו עם הסיסמה שבחרתם, או לחצו «שכחתי סיסמה».","info");
+        }else if(!data.session){
+          authSetErr("✅ החשבון נוצר. שלחנו מייל אישור אל "+c.email+
+            " — לחצו על הקישור שבו, וחזרו לכאן להיכנס.","ok");
+        }else{
+          authSetErr("החשבון נוצר 🎉","ok");
+        }
+      }
+    }catch(e){ authSetErr(authErrText(e)); }
+    authBusy(false);
+  };
+  $("authForgot").onclick=async()=>{
+    const email=$("authEmail").value.trim();
+    if(!email){ authSetErr("מלאו קודם את האימייל, ואז «שכחתי סיסמה»."); return; }
+    authSetErr("שולחים…","info");
+    try{
+      const {error}=await sb.auth.resetPasswordForEmail(email,
+        {redirectTo:location.origin+location.pathname});
+      if(error) throw error;
+      authSetErr("שלחנו קישור אל "+email+". הקישור מחזיר אתכם לכאן, ואז בוחרים סיסמה חדשה.","ok");
+    }catch(e){ authSetErr(authErrText(e)); }
+  };
+  $("authSetPass").onclick=async()=>{
+    authSetErr3("");
+    const p=$("authNewPass").value;
+    if(p.length<6){ authSetErr3("הסיסמה קצרה מדי — צריך לפחות 6 תווים."); return; }
+    const b=$("authSetPass"); b.disabled=true; b.textContent="שומרים…";
+    try{
+      const {error}=await sb.auth.updateUser({password:p});
+      if(error) throw error;
+      authRecovering=false;
+      try{ history.replaceState(null,"",location.pathname); }catch(e){}
+      authSetErr3("הסיסמה נשמרה 🎉","ok");
+      await authRefreshGate();
+      if(authUser) authPullLatest();
+    }catch(e){ authSetErr3(authErrText(e)); }
+    b.disabled=false; b.textContent="שמירת הסיסמה";
+  };
+  $("authFinishProfile").onclick=async()=>{
+    authSetErr2("");
+    const childName=$("authChildName").value.trim();
+    if(!childName){ authSetErr2("צריך למלא את שם הילד/ה."); return; }
+    if(!$("authConsent").checked){ authSetErr2("צריך לאשר את ההסכמה כדי להמשיך."); return; }
+    try{
+      await sb.from("profiles").update({consent_given:true,consent_at:new Date().toISOString()})
+        .eq("id",authUser.id);
+      authStudentId=null; authStudentName=null;
+      await authLoadStudents();
+      const ex=authStudents.find(st=>st.name===childName);
+      const st=ex||await authCreateStudent(childName);
+      if(st){ authStudentId=st.id; authStudentName=st.name; storeStudentChoice(); }
+    }catch(e){}
+    await authRefreshGate();
+    if(authUser) authPullLatest();
+  };
+  $("authSignOut").onclick=async()=>{
+    try{ localStorage.removeItem(STUDENT_KEY); }catch(e){}
+    authStudentId=null; authStudentName=null; authStudents=[];
+    try{ await sb.auth.signOut(); }catch(e){}
+  };
+  $("myReportsBtn").onclick=()=>showMyReports();
+  $("kidSwitchBtn").onclick=async()=>{
+    const box=$("kidPicker"), open=box.classList.contains("hidden");
+    authSetErr4("");
+    if(open){ await authLoadStudents(); renderKidList(); }
+    box.classList.toggle("hidden",!open);
+    if(open) $("kidNewName").focus({preventScroll:true});
+  };
+  $("kidCancel").onclick=()=>{ $("kidPicker").classList.add("hidden"); authSetErr4(""); };
+  $("kidAdd").onclick=async()=>{
+    authSetErr4("");
+    const name=$("kidNewName").value.trim();
+    if(!name){ authSetErr4("צריך למלא שם."); return; }
+    const dup=authStudents.find(st=>st.name===name);
+    if(dup){ authSetErr4("כבר יש ילד/ה בשם הזה — בחרו אותו/ה מהרשימה למעלה."); return; }
+    const b=$("kidAdd"); b.disabled=true; b.textContent="פותחים…";
+    const st=await authCreateStudent(name);
+    b.disabled=false; b.textContent="משחק חדש בשם הזה";
+    if(!st){ authSetErr4("לא הצלחנו לפתוח — נסו שוב בעוד רגע."); return; }
+    $("kidNewName").value="";
+    authStudentId=null;                 // כדי ש-authSelectStudent יזהה החלפה אמיתית
+    await authSelectStudent(st.id,st.name);
+  };
+}
+
+/* ---------- RTL math (הועתק מ-demo_template.html) ---------- */
+function fmtMath(s){
+  if(s==null) return "";
+  const esc = t => t.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  const str = String(s);
+  /* (1) מחרוזת מתמטית טהורה (סימן בודד "<", נוסחה, רשימת ספרות) —
+         מבודדים את כולה כ-LTR. קריטי: '<' ו-'>' הם תווים ממוזגים (Bidi_Mirrored) —
+         בהקשר RTL הדפדפן מצייר אותם הפוך, והתלמיד רואה "<" במקום ">". */
+  if(!/[A-Za-z֐-׿]/.test(str) && /[0-9□_]|[<>=≤≥≈+\-−×÷]/.test(str))
+    return '<bdi dir="ltr">' + esc(str) + '</bdi>';
+  /* (2) נוסחה בתוך משפט עברי. '_' נכלל כדי ש-"12 __ 15" יישאר
+         אי אחד ולא יתפצל לשני איים שסדרם מתהפך.
+         הריצה יכולה להתחיל גם באות (משתנה), במינוס, ב-'(' שנסגר בתוך הריצה,
+         בשורש או בקו ערך מוחלט: בלי זה "−4x < 12" צויר "12 > x4−",
+         "(0,0)" צויר "((0,0" ו-"√22" צויר "22√". נמדד בדפדפן, לא נגזר
+         מהאלגוריתם (qa\qa_atoms.py · qa\qa_bidi.py).
+         מקרה (3) למטה נשמר: משוואת ספרות שנמשכת למילים עבריות נשארת RTL. */
+  /* «תרגיל» = אי שיש בו ספרה ואופרטור אמיתי (השוואה, פעולה בין שני
+     אופרנדים, או מקום חסר). תרגיל מקבל **שורה משלו** (class="mx") רק
+     בתבנית של ספר לימוד — אחרי נקודתיים **וגם** בסוף הגזע. אחרת הוא נשאר
+     בשורה, ורק מובטח שלא יישבר באמצע (white-space:nowrap ב-CSS).
+     בלי זה "4□3,000 > 463,000" נחתך בין שתי שורות. */
+  const RUN = /(?:(?<![֐-׿])[−-])?(?:\((?=[^()֐-׿]*\))[−-]?)?[0-9A-Za-z□_√|π∠∡△²³¹⁰-ₜᵃ-ᵫ][0-9A-Za-z□_.,:;%\s+\-−–×÷·*/=<>≤≥≈≠≅≡∥⊥→←↔()|√°′″π∠∡△²³¹⁰-ₜᵃ-ᵫ‎‏⁦-⁩]*[0-9A-Za-z□_%)°′″|²³¹⁰-ₜᵃ-ᵫ]|[0-9□]/g;
+  const isEx = t => /[0-9]/.test(t) && /[<>≤≥≠=]|[0-9]\s*[+\-−×÷·*]\s*[0-9(]|_{2,}/.test(t)
+                    && t.replace(/\s/g, "").length >= 3;
+  const exCount = (str.match(RUN) || []).filter(isEx).length;
+  return str.replace(RUN, function(full, off, s2){
+    /* סוגר לא-מאוזן בקצה הריצה שייך למשפט העברי ולא לנוסחה: ב-"(השתמשו
+       ב-π ≈ 3.14)" הסוגר הימני סוגר מילים עבריות, ואסור לגרור אותו לאי. */
+    let m = full, pre = "", post = "";
+    for(;;){
+      const o = (m.match(/\(/g) || []).length, c = (m.match(/\)/g) || []).length;
+      if(o > c && m.charAt(0) === "("){ pre += "("; m = m.slice(1); continue; }
+      if(c > o && m.charAt(m.length - 1) === ")"){ post = ")" + post; m = m.slice(0, -1); continue; }
+      break;
+    }
+    if(!m) return esc(full);
+    const nm = s2.slice(off + full.length).match(/^\s*(\S)/);
+    const hebrewNext = nm ? /[֐-׿]/.test(nm[1]) : false;
+    /* תווים שחייבים אי LTR גם כשמילה עברית ממשיכה אחריהם: סוגריים וחיצים
+       ממוזגים ולכן נמשכים הפוך, ושורש/מעריך/מעלות ננטשים בצד הלא נכון של
+       האופרנד — "√25=5 ס\"מ" צויר "25√=5" ו-"(3,2) בציר x" צויר "((3,2".
+       נוסחת ספרות ואופרטור בלבד נשארת בענף ה-RLM שמתחתיה, כמדוד. */
+    const MUST_ISOLATE = /[()√|°′″∠∡△∥⊥≅≡→←↔²³¹⁰-ₜᵃ-ᵫ]/;
+    if(/[<>≤≥_]/.test(m) || /[A-Za-z]/.test(m) || MUST_ISOLATE.test(m) || !hebrewNext){
+      /* תווי כיוון בלתי-נראים (LRM/RLM/LRI…PDI) מופיעים בסוף גזעים במאגר
+         ושברו את הבדיקה הזאת — מנקים אותם לפני ההשוואה, לא מהטקסט. */
+      const bare = t => t.replace(/[‎‏⁦-⁩]/g, "");
+      const tail = /^[\s?.!]*$/.test(bare(s2.slice(off + full.length)));
+      const afterColon = /:\s*$/.test(bare(s2.slice(0, off)));
+      const blk = exCount === 1 && isEx(m) && tail && afterColon;
+      return esc(pre) + '<bdi dir="ltr"' + (blk ? ' class="mx"' : '') + '>' + esc(m)
+             + '</bdi>' + esc(post);
+    }
+    return esc(full).replace(/[=+−×÷·]/g, op => '‏' + op + '‏');
+  });
+}
+
+/* ---------- ערבוב אפשרויות בזמן ריצה ----------
+   המאגר נכתב כשהתשובה הנכונה היא תמיד האפשרות הראשונה (664 מתוך 664, אוג' 2026).
+   `qa_lint.py --fix` פיזר אותן, אבל כל גל שאלות חדש ייטה לחזור לדפוס — ולכן
+   הערבוב נעשה גם כאן, בזמן הגשה: ילד לא יכול ללמוד «תמיד ללחוץ על הראשונה».
+   «אף אחת מהתשובות» / «אי אפשר לדעת» נשארות אחרונות (מוסכמה פדגוגית). */
+const PIN_LAST=/^\s*(אף אחת|אף אחד|אף ספרה|כל התשובות|כל הנ|אי אפשר לדעת|לא ניתן לדעת|none of|all of|cannot)/i;
+function shuffleOptions(q){
+  const opts=(q.options||[]).slice();
+  const pinned=opts.filter(o=>PIN_LAST.test(o.text||""));
+  const free=opts.filter(o=>pinned.indexOf(o)<0);
+  for(let i=free.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    const t=free[i]; free[i]=free[j]; free[j]=t;
+  }
+  return free.concat(pinned);
+}
+
+/* ---------- מנוע אדפטיבי: שרשרת לכל עולם ---------- */
+/* מדרגה r: node=r/3 (מדרגת-כיתה בשרשרת), רמה=r%3+1.
+   נקודת ההתחלה (החלטת התכן): ליבה (רמה 2) של המדרגה שמתחת לכיתת התלמיד —
+   «קצת יותר קל», כדי שהשאלה הראשונה תהיה חוויית הצלחה ולא מחסום.
+   ירידה חופשית עד המדרגה הראשונה — אין רצפה.
+
+   שלושה מקצועות, שלושה סוגי סולם (build_game.py מייצר את כולם באותה סכמה):
+     מתמטיקה — מדרגה לכל כיתה (g0 = grade)
+     עברית   — אבני דרך: סוף כיתה ב׳ / ד׳ / ו׳, ואז חטיבה (g0 ≠ grade)
+     אנגלית  — רמות CEFR‏ Pre-A1 → A1 → A2 (מתחילות בכיתה ג׳)
+   לכן הזכאות והתקרה נקבעות לפי **g0** (הכיתה שבה הנושא מתחיל להילמד), ומה
+   שמוצג לילד ובדוח הוא **tag** («כיתה ג׳» / «סוף כיתה ד׳» / «A1»). */
+let session=null;
+const GRADE_HE=["","א׳","ב׳","ג׳","ד׳","ה׳","ו׳","ז׳","ח׳","ט׳","י׳","י״א","י״ב"];
+const AGE_MIN=6, AGE_MAX=15;                 // כיתה = גיל − 6 (א׳ בגיל 6–7)
+const gradeFromAge=a=>Math.max(1,Math.min(9,a-5));
+const threadById=id=>GAME_DATA.threads.find(t=>t.id===id);
+const SUBJ_EMOJI={hebrew:"📚",math:"🔢",english:"🔤"};
+/* גרסת «מקצוע אחד»: הילד/ה בוחר/ת מקצוע ומשחק/ת רק את העולמות שלו, ואז
+   את עולם הבונוס. הדגל נקבע ב-<head> של הפריסה (`publish.py --single`);
+   בלעדיו המשחק זהה לגרסה המלאה. העולמות נשארים **אותם עולמות בדיוק**
+   (מתמטיקה = עולמות 3–5) — מספר הקוביות שונה בין העולמות, ולכן החלפת עולם
+   הייתה משנה את תקציב השאלות ואת המהימנות שנמדדה. */
+const SUBJECT_PICK=!!window.CQ_SUBJECT_PICK;
+const ALL_SUBJECTS=["hebrew","math","english"];
+let pickedSubject=null;
+/* שמירה של גרסה אחת אינה «להמשיך» בגרסה האחרת — שתיהן כותבות לאותה טבלת
+   game_runs, ומפגש של מקצוע אחד שנפתח במשחק המלא היה מסתיים בדוח חסר. */
+const saveFitsMode=o=>!!o&&(SUBJECT_PICK?ALL_SUBJECTS.includes(o.subject):!o.subject);
+
+/* ============================ מנוע התחנות ============================
+   כיתה = תחנה אחת (ולא שלוש מדרגות). בתחנה שולפים שאלות מתוך השמונה של
+   אותה כיתה **לפי סדר העדיפות שהבנייה קבעה** — לא בהגרלה. הסדר הזה מיוצר
+   ב-`spread_by_area` (build_game_core8.py) כך ששלוש השאלות המכריעות מכסות
+   שלושה תחומי ליבה שונים, ולכן פרופיל התחומים נגזר מהחיפוש עצמו בלי שלב
+   נפרד. **שלוש הראשונות הן שמכריעות**: נמדד שמשבצת 5 ומעלה היא 93%–100%
+   שאלת פרופיל, ולכן איכות הכיול שלהן היא שקובעת את הרמה.
+
+   הכלל (החלטת שני, שיחה 13, אחרי סימולציה על המפגשים השמורים):
+     3 נכונות בתחנה  → עולים כיתה
+     טעות ראשונה     → שאלה נוספת מאותה תחנה
+     טעות שנייה      → יורדים כיתה
+     שתי תחנות כושלות ברצף → יורדים שתיים (ירידה מאיצה)
+   התחנה נסגרת אחרי 4 שאלות לכל היותר. ההאצה נמדדה: בלעדיה ילד/ה שנמצא/ת
+   שלוש כיתות מתחת מבזבז/ת שש שאלות רק על הירידה, והסטייה קופצת ל-2.39.
+   ==================================================================== */
+const GOOD_TO_PASS=3, BAD_TO_DROP=2, MIN_AT_STATION=3;
+/* **מינימום שלוש שאלות בתחנה לפני ירידה** (משוב משחק, שני): בלי זה שתי
+   טעויות רצופות הפילו כיתה שלמה אחרי שתי שאלות בלבד, וזה מרגיש רדוד —
+   ונשען על ראיה דקה מדי. עכשיו כל תחנה מקבלת 3–4 שאלות, בשני הכיוונים. */
+const eligibleStations=(cfg,grade)=>cfg?cfg.stations.filter(st=>st.grade_from<=grade):[];
+
+function newThread(cfg,grade){
+  const st=eligibleStations(cfg,grade);
+  if(!st.length) return null;              // אנגלית בכיתות א׳–ב׳: העולם נשמט
+  /* התחנות שמעל כיתת הילד/ה נשמרות בצד. הן אינן בסולם הרגיל — הכניסה
+     אליהן היא דרך שאלת הבונוס בלבד, ורק אם היא נענתה נכון. */
+  const above=cfg.stations.slice(st.length);
+  /* תחנת הפתיחה: האחרונה שהילד/ה כבר **סיים/ה** ללמוד. לא הכיתה עצמה —
+     כדי שהשאלה הראשונה תהיה כזו שאפשר לענות עליה. */
+  let start=0;
+  for(let i=0;i<st.length;i++) if(st[i].grade_to<grade) start=i;
+  const chal=above[0]||null;                 // תחנת בונוס אחת מעל התקרה
+  return {cfg,st,above,chalSt:chal,idx:start,startIdx:start,ceil:st.length-1,
+          good:0,bad:0,failStreak:0,challenge:false,challengePassed:false,
+          passed:new Set(),failed:new Set(),done:false,result:null,asked:0};
+}
+const stationAt=(T,i)=>T.st[i]||null;
+const curStation=T=>!T?null:(T.challenge?T.chalSt:stationAt(T,T.idx));
+function stationPool(T,station){
+  if(!station) return [];
+  return station.question_ids.map(id=>GAME_DATA.byId[id])
+    .filter(q=>q&&!session.used.has(q.question_id));
+}
+/* בלי הגרלה: הסדר במפרט הוא סדר העדיפות, ולכן המיפוי חוזר על עצמו
+   בין ילדים ובין הרצות — וזו בדיוק הסיבה שצמצמנו את המאגר. */
+function pickQuestion(T){ const p=stationPool(T,curStation(T)); return p.length?p[0]:null; }
+
+/* אחרי שהסולם נסגר נשארות לרוב שאלות בתחנת הגבול, ולמקצוע נשארים עולמות.
+   במקום לתת קוביות חינם, שואלים אותן כ**שאלות פרופיל**: הן ממפות עוד תחומי
+   ליבה באותה רמה בדיוק, ואינן משנות את הרמה שנמצאה. זה מה שהופך «כיתה ג׳»
+   ל«כיתה ג׳, ובתוכה כפל תקין ושברים חלשים». */
+/* המכסה היא **לכל עולם** ולא לכל מקצוע: אחרת העולם השלישי של מתמטיקה
+   נשאר בלי שאלה אחת, כפי שקרה במשחק אמיתי. */
+const PROFILE_MAX=4;
+function profileQuestion(T){
+  if(!T||!T.result) return null;
+  const w=state.stageIdx||0;
+  if(((T.pfByWorld||{})[w]||0)>=PROFILE_MAX) return null;
+  const b=T.result.boundary?T.result.boundary.station:-1;
+  /* סורקים מהגבול כלפי מטה: כל תחנה שנמדדה עשויה להחזיק עוד תחומים
+     שלא נגענו בהם, וזה בדיוק מה שממלא את העולמות הנוספים של המקצוע. */
+  const order=[]; for(let k=b;k>=Math.max(0,b-2);k--) order.push(k);
+  for(const i of order){
+    if(i<0||i>=T.st.length) continue;
+    const p=stationPool(T,T.st[i]);
+    if(p.length) return {q:p[0],station:i};
+  }
+  return null;
+}
+function ownThread(){
+  if(!session) return null;
+  const p=stageInfo();
+  if(p&&p.thread) return session.byId[p.thread];
+  /* עולם הבונוס נשאר פרס — **אלא אם כן נשארה שרשרת שלא הספיקה להימדד**.
+     נמדד: ילד/ה בכיתה ט׳ שנמצא/ת ברמת כיתה ב׳ בעברית צריך/ה יותר שאלות
+     ממה ששני עולמות מספקים, והשרשרת נסגרה כ«לא נמדד» — כלומר בלי מידע.
+     במקרה כזה הבונוס נפרע לטובת המדידה; לילד/ה שנמדד/ה הוא נשאר חופשי. */
+  return session.threads.find(T=>!T.done)||null;
+}
+function activeThread(){
+  if(!session) return null;
+  const p=stageInfo();
+  if(!p||!p.thread) return null;
+  const own=session.byId[p.thread];
+  return (own&&!own.done)?own:null;
+}
+function threadPass(T){
+  if(T.challenge){
+    /* **התקרה נפתחת.** קודם שאלת בונוס נכונה סגרה את השרשרת ורשמה דגל
+       «מעל התקרה» בלבד, ולכן ילד/ה חזק/ה נראה/ית זהה לילד/ה בדיוק בכיתתו/ה
+       (נצפה במשחק: «עניתי נכון על הכול והרמה נשארה אחת מעל»). עכשיו תשובה
+       נכונה בבונוס **מצרפת את התחנה לסולם** וממשיכים לטפס בכלל הרגיל —
+       3 נכונות לכיתה. תשובה שגויה בבונוס עדיין רק סוגרת, בלי עונש. */
+    T.challengePassed=true;
+    T.challenge=false;
+    const nx=T.above.shift();
+    if(nx){
+      T.st.push(nx); T.ceil=T.st.length-1; T.idx=T.ceil;
+      T.chalSt=T.above[0]||null;
+      /* **הבונוס אינו נרשם ב-passed** — כלל קיים בפרויקט: מדרגה שנרשמה על
+         תשובה יחידה מקפיצה את maxPassed ומזכה בכיתה שלמה על תצפית אחת.
+         הוא נספר כתשובה הראשונה מתוך שלוש, ותו לא. */
+      T.good=1; T.bad=0;
+      /* התנאי נבדק על **התחנה שזה עתה נוספה**, לא על תחנת הבונוס הבאה.
+         קודם נבדק T.chalSt, ולכן כשהתחנה שנוספה הייתה האחרונה בסולם
+         (chalSt יוצא null) השרשרת נסגרה מיד והילד/ה לא קיבל/ה בה אף
+         שאלה. התוצאה: אף אחד מלבד תלמיד/ת כיתה ט׳ לא יכול/ה היה
+         להימדד כיתה ט׳ — כל השאר נעצרו על 8 עם דגל «מעל התקרה». */
+      if(stationPool(T,curStation(T)).length) return;        // ממשיכים
+    }
+    finishThread(T,"above_ceiling"); return;
+  }
+  T.passed.add(T.idx); T.good=0; T.bad=0; T.failStreak=0;
+  if(T.idx>=T.ceil){
+    if(T.chalSt&&stationPool(T,T.chalSt).length){ T.challenge=true; return; }
+    finishThread(T,"ceiling"); return;
+  }
+  if(T.failed.has(T.idx+1)){ finishThread(T,"boundary"); return; }
+  T.idx++;
+}
+function threadFail(T){
+  T.failed.add(T.idx); T.good=0; T.bad=0; T.failStreak++;
+  if(T.idx===0){ finishThread(T,"boundary"); return; }        // מתחת לרצפה
+  if(T.passed.has(T.idx-1)){ finishThread(T,"boundary"); return; }
+  /* ההאצה בוטלה אחרי משחק אמיתי: היא הורידה מכיתה ג׳ לכיתה א׳ בארבע
+     שאלות והרגישה כאילו המשחק ויתר על הילד. עם מינימום 3 שאלות בתחנה
+     ותקציב של שלושה עולמות למתמטיקה, ירידה של כיתה אחת בכל פעם נכנסת
+     בנוחות ומשאירה את המסלול קריא. */
+  /* ירידה של כיתה אחת — **אלא אם כן כבר נכשלו שלוש תחנות ברצף**. הגרסה
+     שהאיצה מיד הרגישה כאילו המשחק ויתר (משוב משחק, שני), והגרסה בלי האצה
+     בכלל לא הספיקה להגיע לילד/ה בכיתה ט׳ שנמצא/ת ברמת כיתה ג׳ — התקציב
+     נגמר באמצע הירידה והשרשרת נסגרה כ«לא נמדד». שלוש תחנות = תשע שאלות
+     של מאמץ גלוי לפני שהמנוע מדלג. */
+  const step=T.failStreak>=3?2:1;
+  let n=Math.max(0,T.idx-step);
+  while(n<T.idx&&T.passed.has(n)) n++;
+  if(n>=T.idx){ finishThread(T,"boundary"); return; }
+  T.idx=n;
+}
+/* הבדיקה הקצרה (probe) בוטלה: השרשרת היחידה של מתמטיקה נוגעת ממילא בכל
+   תחומי הליבה, כולל גאומטריה, ולכן אין מה לבדוק בנפרד. */
+function newProbe(cfg,grade){
+  const nodes=eligibleNodes(cfg,grade);
+  if(!nodes.length) return null;
+  return {cfg,nodes,idx:nodeIdxFor(nodes,Math.max(1,grade-1)),level:2,asked:0,correct:0,
+          done:false,passed:false,lastAt:-99,items:[]};
+}
+/* מסלול העולמות: לכל עולם שרשרת אחת, בסדר עברית → מתמטיקה → אנגלית, ועולם
+   בונוס אחרון בלי שאלות. שרשרת שאין לה תוכן בכיתה הזאת (אנגלית בכיתות א׳–ב׳)
+   מפילה את העולם שלה מהמסלול — הילד פשוט משחק 6 עולמות במקום 8. */
+function newSession(grade,subject){
+  const stage=grade>=7?"middle":"elementary";
+  /* מסלול אחד לשתי החטיבות: התחנות מסוננות ממילא לפי כיתת הילד/ה,
+     ולכן אין צורך בשני מסלולים. */
+  const spec=(GAME_DATA.world_plan||[]).map(sub=>({thread:sub,probe:null}))
+    /* מקצוע אחד: נשארים רק העולמות שלו ועולם הבונוס. `w` נשאר המיקום
+       המקורי, ולכן כל עולם נטען בדיוק כמו בגרסה המלאה. */
+    .map((s,i)=>Object.assign(s,{w:i}))
+    .filter(s=>!subject||!s.thread||s.thread===subject);
+  const threads=[], byId={}, plan=[];
+  let probeCfgId=null;
+  spec.forEach(s=>{
+    const i=s.w;
+    if(!s.thread){ plan.push({w:i,thread:null,probe:null,subject:null,subjectHe:null}); return; }
+    if(!(s.thread in byId)){
+      const T=newThread(threadById(s.thread),grade);
+      byId[s.thread]=T;                     // גם null נשמר: «אין תוכן בכיתה הזאת»
+      if(T) threads.push(T);
+    }
+    const T=byId[s.thread];
+    if(!T) return;                          // העולם נשמט מהמסלול
+    if(s.probe) probeCfgId=s.probe;
+    plan.push({w:i,thread:s.thread,probe:s.probe||null,
+               subject:T.cfg.subject,subjectHe:T.cfg.subject_he});
+  });
+  session={grade,subject:subject||null,age:pickedAge,stage,startTs:Date.now(),asked:0,answers:[],diagnoses:[],results:[],
+           used:new Set(),reportReady:false,threads,byId,plan,stars:0,starsTotal:plan.length,
+           probe:null};
+}
+/* לפני שנבחרה כיתה (מסך הפתיחה) מוצג עולם 1 כרקע — מסלול ברירת מחדל בלי שאלות */
+const defaultPlan=()=>WORLDS.map((w,i)=>({w:i,thread:null,probe:null,subject:null,subjectHe:null}));
+const curPlan=()=>session?session.plan:defaultPlan();
+function stageInfo(){ const p=curPlan(); return p[Math.min(state.stageIdx||0,p.length-1)]||null; }
+/* הבדיקה הקצרה בוטלה עם מעבר לשרשרת אחת למקצוע — ראו ההערה למעלה.
+   הפונקציות נשארות כ-no-op כדי שכל אתרי הקריאה ימשיכו לעבוד. */
+function probePool(){ return []; }
+function probeDue(){ return false; }
+
+
+/* ---------- ראיות ומהימנות ----------
+   כל מסקנה בדוח צריכה לשאת איתה את הבסיס שעליו היא נשענת. בלי זה «שליטה
+   בליבה» שנקבעה על שאלה אחת נראית זהה לכזו שנקבעה על ארבע — ובשיבוץ
+   לקבוצות ההבדל הזה הוא בדיוק ההבדל בין קבוצה הומוגנית לקבוצה מעורבבת. */
+const FAST_SEC=3;          // תשובה נכונה מהירה מזה — חשד לניחוש שהצליח
+const SLOW_SEC=150;        // תשובה שארכה יותר מזה — הפסקה או עזרה מבחוץ
+const EV0=()=>({asked:0,correct:0,skipped:0,second_try:0,no_retry:0,fast_correct:0,slow:0});
+/* נגזר מיומן התשובות ולא ממונים במנוע — כך זה שורד שמירה והמשך בין עולמות. */
+function stationEvidence(T){
+  const ev={};
+  session.answers.forEach(a=>{
+    /* שאלת הבונוס מוחרגת מהראיות: היא מעל התקרה ואינה חלק מהמדידה. */
+    if(a.mode!=="thread"||a.thread!==T.cfg.id||a.station==null||a.challenge) return;
+    const e=ev[a.station]||(ev[a.station]=EV0());
+    e.asked++;
+    if(a.correct) e.correct++;
+    if(a.skipped) e.skipped++;
+    /* טעות שאחריה לא נותרה שאלה בתחנה — התחנה הוכרעה על פחות ראיות
+       ממה שהכלל דורש, וזו ודאות נמוכה ולא ממצא. */
+    if(!a.correct&&a.pool_left===0) e.no_retry++;
+    if(a.correct&&a.seconds<=FAST_SEC) e.fast_correct++;
+    if(a.seconds>=SLOW_SEC) e.slow++;
+  });
+  return ev;
+}
+const evSum=(ev,keys)=>{const o=EV0();keys.forEach(r=>{const e=ev[r];if(!e)return;
+  for(const k in o) o[k]+=e[k];});return o;};
+/* דרגת ודאות — כלל מפורש ודטרמיניסטי:
+     none   — לא נמדדה אף תחנה
+     low    — השרשרת נקטעה, או שתחנה הוכרעה בלי מספיק שאלות במאגר
+     medium — נמדד, אך הגבול לא אושר בשתי טעויות בתחנה שמעליו
+     high   — מעבר בתחנה + שתי טעויות בתחנה שמעליה, בלי דגלים */
+function threadConfidence(ev,maxPassed,reason,belowFloor){
+  const all=evSum(ev,Object.keys(ev));
+  if(!all.asked) return "none";
+  if(reason==="bank_exhausted"||reason==="session_ended") return "low";
+  if(all.no_retry) return "low";
+  /* **תוצאת רצפה אינה ממצא ודאי.** ילד/ה שלא שיתף/ה פעולה, ילד/ה שאינו/ה
+     קורא/ת, וילד/ה שבאמת נמצא/ת מתחת לכיתה א׳ מייצרים בדיוק את אותו דפוס:
+     שתי טעויות בתחנה הראשונה. קודם זה חזר "high", ולכן בעיית **איכות נתונים**
+     נקראה בשיבוץ כממצא ודאי על התלמיד/ה. נמדד: «תמיד שגוי» ו«ניחוש אקראי»
+     החזירו high ב-100% מהמפגשים. בלי אף תשובה נכונה בכל השרשרת לא נמדד כלום. */
+  if(belowFloor) return all.correct>0?"medium":"low";
+  if(reason==="ceiling"||reason==="above_ceiling") return "medium";
+  const above=ev[maxPassed+1];
+  const confirmed=(maxPassed>=0&&above&&(above.asked-above.correct)>=BAD_TO_DROP);
+  if(!confirmed) return "medium";
+  return all.fast_correct?"medium":"high";
+}
+function finishThread(T,reason){
+  if(T.done&&T.result) return;
+  T.done=true;
+  T.endReason=T.endReason||reason||"boundary";
+  const N=T.st.length;
+  let maxPassed=-1; T.passed.forEach(i=>maxPassed=Math.max(maxPassed,i));
+  let minFailed=1e9; T.failed.forEach(i=>minFailed=Math.min(minFailed,i));
+  const ev=stationEvidence(T);
+  const states=[];
+  for(let i=0;i<N;i++){
+    if(T.passed.has(i)) states.push("passed");
+    else if(T.failed.has(i)) states.push("failed");
+    else if(i<maxPassed) states.push("inferred-pass");
+    else if(i>minFailed) states.push("inferred-fail");
+    else states.push("untested");
+  }
+  const score=Math.round(states.filter(x=>x==="passed"||x==="inferred-pass").length/N*100);
+  /* פרופיל התחומים — הציר שהדוח למלווה מדבר בו. הוא נגזר מהחיפוש עצמו:
+     שמונה השאלות של כל כיתה פרוסות על תחומים שונים, ולכן כל תשובה נושאת
+     תחום, ואין צורך בשלב מדידה נפרד. */
+  const areasMap={};
+  session.answers.forEach(a=>{
+    if(a.mode!=="thread"||a.thread!==T.cfg.id||!a.area||a.challenge) return;
+    const A=areasMap[a.area]||(areasMap[a.area]={area:a.area,area_he:a.area_he||a.area,
+                                                asked:0,correct:0,top_grade:null,focus:[]});
+    A.asked++;
+    if(a.focus_he&&A.focus.indexOf(a.focus_he)<0) A.focus.push(a.focus_he);
+    if(a.correct){ A.correct++; if(A.top_grade==null||a.grade>A.top_grade) A.top_grade=a.grade; }
+  });
+  const nodesOut=[];
+  for(let i=0;i<N;i++){
+    const st=T.st[i], e=ev[i]||EV0(), x=states[i];
+    const held=(x==="passed"||x==="inferred-pass");
+    nodesOut.push({grade:st.grade_to, g0:st.grade_from, tag:st.tag, label:T.cfg.name,
+                   level_id:st.level_id, topic_ids:[],
+                   level_reached:held?2:0,
+                   status:x==="untested"?"not_assessed":(held?"core":"below_basic"),
+                   measured:(x==="passed"||x==="failed"), evidence:e,
+                   thin_evidence:e.no_retry>0||(x==="passed"&&e.asked<GOOD_TO_PASS)});
+  }
+  const bSt=maxPassed>=0?T.st[maxPassed]:null;
+  const boundary=bSt?{station:maxPassed,grade:bSt.grade_to,g0:bSt.grade_from,tag:bSt.tag,
+                      label:T.cfg.name,level_id:bSt.level_id,level:null}:null;
+  const evAll=evSum(ev,Object.keys(ev));
+  const belowFloor=maxPassed<0&&evAll.asked>0;
+  /* level_value — הערך היחיד שמותר להשוות בין תלמידים: הכיתה שנמצאה ועוד
+     השבר של מה שנענה נכון בכיתה שמעליה. זה מחליף את «שליש הכיתה» של המנוע
+     הישן, שאיבד משמעות כשכיתה הפכה לתחנה אחת. **דוחות שנוצרו לפני השינוי
+     יושבים על סרגל אחר ואינם ברי-השוואה** — ראו scale ב-buildReport. */
+  let levelValue=null;
+  if(bSt){
+    const nx=ev[maxPassed+1];
+    const frac=(nx&&nx.asked)?Math.min(0.99,nx.correct/nx.asked):0;
+    levelValue=Math.round((bSt.grade_to+frac)*100)/100;
+  } else if(belowFloor){
+    levelValue=T.st[0].grade_to-0.5;
+  }
+  T.result={thread:T.cfg.id,subject:T.cfg.subject,subject_he:T.cfg.subject_he,
+            name:T.cfg.name,score,states,nodes:nodesOut,questions_asked:T.asked,
+            areas:Object.keys(areasMap).map(k=>areasMap[k]),
+            end_reason:T.endReason, boundary, below_floor:belowFloor, level_value:levelValue,
+            at_or_above_ceiling:T.endReason==="ceiling"||T.endReason==="above_ceiling",
+            above_ceiling:!!T.challengePassed,
+            challenge_asked:!!T.chalSt&&(T.challenge||T.challengePassed),
+            start_station:T.startIdx, ceiling_station:T.ceil,
+            confidence:threadConfidence(ev,maxPassed,T.endReason,belowFloor),
+            evidence:evAll, station_evidence:ev};
+  session.results.push(T.result);
+  if(!session.reportReady&&session.threads.every(x=>x.done)){
+    session.reportReady=true;
+    try{ showToast("סיימנו את המיפוי! מכאן ממשיכים לשחק בכיף 🎈",3000); }catch(e){}
+  }
+}
+/* ---------- placement: הפלט שמיועד למכונה ----------
+   אובייקט שטוח ויציב שממנו נבנה השיבוץ לקבוצות. שלושה עקרונות:
+   (1) הערך המשווה הוא **מדרגת הגבול** בשפת הכיתה/אבן הדרך — לא הציון,
+       שמנורמל לתקרת התלמיד ולכן חסר משמעות בין תלמידים.
+   (2) לכל מקצוע נלקחת השרשרת ה**נמוכה** ביותר: משם השיעור חייב להתחיל.
+       הפער בין השרשראות נשמר בנפרד — פער גדול הוא בעצמו ממצא.
+   (3) ודאות נמוכה נאמרת במפורש כדי שתטופל כנתון חסר, ולא תיקרא כרמה נמוכה
+       — אחרת חור במאגר משבץ ילד לקבוצה חלשה מדי. */
+const SCHEMA_VERSION=3;
+/* «באיזה סרגל נמדד הילד». המנוע הישן דיווח שליש-כיתה, החדש כיתה ועוד
+   שבר התחומים. דוח משני הסרגלים אינו בר-השוואה, וזה נאמר במפורש
+   בקובץ כדי שהשיבוץ לקבוצות לא ישווה בשקט מספרים שאינם ניתנים
+   להשוואה (החלטת שני: מי שכבר מופה נשאר כמו שהוא). */
+const LEVEL_SCALE="station_v1";
+const CONF_RANK={none:0,low:1,medium:2,high:3};
+function buildPlacement(){
+  const out={};
+  ["hebrew","math","english"].forEach(sub=>{
+    const list=session.threads.filter(T=>T.cfg.subject===sub&&T.result);
+    if(session.subject&&sub!==session.subject){
+      out[sub]={assessed:false, confidence:"none", reason:"not_chosen"};
+      return;
+    }
+    if(!list.length){
+      out[sub]={assessed:false, confidence:"none",
+                reason:(sub==="english"&&session.grade<3)?"not_taught_yet":"not_mapped"};
+      return;
+    }
+    const rows=list.map(T=>({thread:T.result.thread, name:T.result.name,
+      level_value:T.result.level_value,
+      level_grade:T.result.boundary?T.result.boundary.grade:null,
+      level_tag:T.result.boundary?T.result.boundary.tag:null,
+      level_within:null,
+      below_floor:T.result.below_floor, at_or_above_ceiling:T.result.at_or_above_ceiling,
+      above_ceiling:T.result.above_ceiling,   // עבר שאלת בונוס מעל הכיתה — דגל, לא רמה
+      confidence:T.result.confidence, end_reason:T.result.end_reason,
+      questions:T.result.questions_asked, score:T.result.score,
+      floor_tag:T.result.below_floor?T.st[0].tag:null}));
+    /* השרשרת הנמוכה קובעת את רמת המקצוע — משם השיעור חייב להתחיל. */
+    const meas=rows.filter(r=>r.level_value!=null);
+    /* הוודאות נמדדת רק על השרשראות שתרמו רמה. שרשרת שכלל לא נבדקה היא
+       בעיית **כיסוי** ולא בעיית מהימנות — היא נספרת ב-threads_assessed
+       ומדליקה דגל נפרד, ואינה גוררת את המקצוע כולו ל«none». */
+    const conf=meas.reduce((w,r)=>CONF_RANK[r.confidence]<CONF_RANK[w]?r.confidence:w,"high");
+    const low=meas.length?meas.reduce((a,r)=>r.level_value<a.level_value?r:a):null;
+    const hi=meas.length?meas.reduce((a,r)=>r.level_value>a.level_value?r:a):null;
+    out[sub]={assessed:meas.length>0, confidence:meas.length?conf:"none",
+      threads_assessed:meas.length, threads_total:rows.length,
+      level_value:low?low.level_value:null,
+      level_grade:low?low.level_grade:null,
+      level_tag:low?(low.level_tag||low.floor_tag):null,
+      level_within:low?low.level_within:null,
+      below_floor:!!(low&&low.below_floor),
+      gap_from_grade:low?Math.round((low.level_value-session.grade)*10)/10:null,
+      /* לדגלים סופרים **כיתות שלמות**: «כיתה ג׳ ליבה» אצל תלמיד כיתה ה׳ הוא
+         פער של שתי כיתות, גם אם ההפרש בערך המיון הוא 1.67. */
+      gap_grades:low?Math.floor(low.level_value)-session.grade:null,
+      spread:low?Math.round((hi.level_value-low.level_value)*10)/10:null,
+      questions:rows.reduce((s,r)=>s+r.questions,0),
+      threads:rows};
+  });
+  /* דגלים — מה שמנהלת פדגוגית צריכה לראות בשורה אחת בטבלה */
+  const flags=[];
+  const ev=session.threads.filter(T=>T.result).reduce((s,T)=>s+(T.result.evidence.fast_correct||0),0);
+  const slow=session.threads.filter(T=>T.result).reduce((s,T)=>s+(T.result.evidence.slow||0),0);
+  Object.keys(out).forEach(sub=>{
+    const p=out[sub];
+    if(p.reason==="not_chosen") return;              // לא נבחר — אין מה לסמן
+    if(p.gap_grades!=null&&p.gap_grades<=-2) flags.push("below_grade:"+sub);
+    if(p.gap_grades!=null&&p.gap_grades>=1) flags.push("above_grade:"+sub);
+    if(p.spread>=2) flags.push("uneven:"+sub);       // פרופיל לא אחיד — קבוצה עלולה לא להתאים
+    if(CONF_RANK[p.confidence]<=1&&p.reason!=="not_taught_yet") flags.push("low_confidence:"+sub);
+    if(p.assessed&&p.threads_assessed<p.threads_total) flags.push("partial_coverage:"+sub);
+  });
+  if(session.threads.some(T=>T.result&&(T.result.end_reason==="session_ended"||T.result.end_reason==="bank_exhausted")))
+    flags.push("incomplete_mapping");
+  if(ev>=3) flags.push("fast_answers");            // חשד לניחושים שהצליחו
+  if(slow>=2) flags.push("slow_answers");          // הפסקות או עזרה מבחוץ
+  return {schema_version:SCHEMA_VERSION, level_scale:LEVEL_SCALE, grade:session.grade, age:session.age||null,
+          grade_source:(session.age&&gradeFromAge(session.age)!==session.grade)?"child_override":"age",
+          subjects:out, flags};
+}
+/* נמדד בזמן הדוח ולא בזמן סגירת השרשרת: שאלות הפרופיל נשאלות **אחרי**
+   שהסולם נסגר, ולולא זה הן לא היו נספרות בפרופיל בכלל. */
+function threadAreas(T){
+  const m={};
+  session.answers.forEach(a=>{
+    if(a.thread!==T.cfg.id||!a.area||a.challenge||a.mode==="probe") return;
+    const A=m[a.area]||(m[a.area]={area:a.area,area_he:a.area_he||a.area,
+                                   asked:0,correct:0,top_grade:null,focus:[]});
+    A.asked++;
+    if(a.focus_he&&A.focus.indexOf(a.focus_he)<0) A.focus.push(a.focus_he);
+    if(a.correct){ A.correct++; if(A.top_grade==null||a.grade>A.top_grade) A.top_grade=a.grade; }
+  });
+  return Object.keys(m).map(k=>m[k]);
+}
+function buildReport(){
+  /* שרשרת שלא הגיעה לגבול עד סוף המפגש נסגרת כ«נקטע», ולא כגבול ידע.
+     שרשרת done בלי result (resume ממכשיר אחר, ראו finishThread) מחושבת
+     מחדש מהיומן הגולמי — לא session_ended, כי היא כבר הסתיימה באמת. */
+  session.threads.forEach(T=>{
+    if(!T.done) finishThread(T,"session_ended");
+    else if(!T.result) finishThread(T,T.endReason||"boundary");
+  });
+  /* מקצוע שאין לו אף שרשרת (אנגלית בכיתות א׳–ב׳) מדווח מפורשות כ«טרם נלמד»
+     ולא נעלם מהדוח — להורה חשוב לדעת שלא בדקנו, ולמה. */
+  const covered=new Set(session.threads.map(T=>T.cfg.subject));
+  const scope=session.subject?[session.subject]:ALL_SUBJECTS;
+  const skipped=scope.filter(s=>!covered.has(s));
+  return {schema_version:SCHEMA_VERSION, level_scale:LEVEL_SCALE,
+    /* אילו מקצועות המפגש התכוון לבדוק. מקצוע מחוץ לטווח לא «לא נבדק» —
+       הוא לא נבחר, והדוחות משמיטים אותו (placement: reason="not_chosen"). */
+    subject_scope:scope,
+    placement:buildPlacement(),          // ← הפלט לשיבוץ לקבוצות (ראו buildPlacement)
+    /* השם נכנס לדוח עצמו (ולא רק לשורת students בענן) כדי שקובץ ה-JSON
+       המיוצא יידע של מי הוא — make_reports.py קורא בדיוק את student.name. */
+    student:{name:authStudentName||null, age:session.age||null, grade:session.grade,
+      grade_from_age:session.age?gradeFromAge(session.age):null,
+      grade_source:(session.age&&gradeFromAge(session.age)!==session.grade)?"child_override":"age"},
+    source:"cube-quest-game", finished:new Date().toISOString(),
+    total_seconds:Math.round((Date.now()-session.startTs)/1000),
+    questions_asked:session.asked, answers:session.answers,
+    stars:{collected:session.stars, of:session.starsTotal},
+    subjects_not_taught:skipped,
+    probe:session.probe?{thread:session.probe.cfg.id, name:session.probe.cfg.name,
+      emoji:session.probe.cfg.emoji,
+      questions_asked:session.probe.asked, correct:session.probe.correct,
+      passed:session.probe.passed, checked_grade:session.probe.nodes[session.probe.idx].grade,
+      checked_tag:session.probe.nodes[session.probe.idx].tag,
+      level:session.probe.level, items:session.probe.items}:null,
+    /* emoji/above_ceiling נוספו כאן (לא רק ב-live session.threads) כדי שהדוח
+       השמור ב-reports יהיה עצמאי לגמרי — showMyReports() מציג אותו הרבה אחרי
+       שה-session המקורי כבר לא קיים, בלי שום תלות בזיכרון של אותה הרצה. */
+    knowledge_state:session.threads.map(T=>({thread:T.result.thread, name:T.result.name,
+      emoji:T.cfg.emoji, subject:T.cfg.subject, subject_he:T.cfg.subject_he,
+      areas:threadAreas(T),
+      assessed:T.result.nodes.some(n=>n.measured), above_ceiling:T.result.above_ceiling,
+      score:T.result.score, questions_asked:T.result.questions_asked,
+      start_grade:T.st[T.startIdx].grade_to, start_tag:T.st[T.startIdx].tag,
+      start_level:null,
+      topics:T.result.nodes})),
+    diagnosed_misconceptions:session.diagnoses};
+}
+
+/* ---------- shared constants ---------- */
+const H=540, GY=440, WY=498;          // logical height, ground top, water top
+const PW=30, PH=44;                    // player size
+const GRAV=2100, JUMP_V=720, MAXVX=330;
+/* גובה קפיצה רגילה = JUMP_V²/2g ≈ 123px, טווח אופקי ≈ 226px.
+   קפיץ  ≈ 296px (מגיע מהקרקע עד y≈100) · קפיצה כפולה בעזרת נוצה ≈ 227px.
+   כל פלטפורמה חדשה חייבת להיות בטווח אחד מהשלושה מהמשטח שמתחתיה. */
+const SPRING_V=1116, DBLJUMP_V=662, WINGS_SEC=14;
+
+/* ---------- worlds ----------
+   כל עולם: קטעי קרקע, גשרים (need = מספר הקרשים המדויק), פלטפורמות,
+   קוביות, ממתקים, דגל, פלטת צבעים (עם מעבר הדרגתי), נוף ומזג אוויר.
+
+   שדות רשות (נוספו בשיחה 4 — האתגר האנכי):
+     springs :[x,y]                       קפיץ על משטח בגובה y — מעיף ל-296px
+     movers  :[x,y,w,dx,dy,period,phase]  פלטפורמה נעה סביב (x,y) באמפליטודה dx/dy
+     feathers:[x,y]                       🪶 נוצה — קפיצה כפולה ל-14 שניות
+     gems    :[x,y]                       💎 50 נקודות, ממוקם בגובה שדורש מיומנות
+     star    :[x,y]                       ⭐ כוכב סודי אחד לעולם, נספר בדוח
+
+   **אילוץ שאסור לשבור**: מספר הקוביות ≥ סך ה-need של כל הגשרים + 2, והקוביות
+   רשומות לפי סדר x עולה (פריסת השאלות ב-isQuestionCube עובדת לפי אינדקס). */
+const WORLDS=[
+ { name:"עמק הגשרים", emoji:"🌳", x0:-240, x1:6650, flagX:6400, seed:20260803,
+   deco:"meadow", weather:"butterfly", water:"#3E97C9",
+   segs:[[-240,1400],[1700,3260],[3620,5200],[5680,6650]],
+   bridges:[[1400,1700,2],[3260,3620,3],[5200,5680,4]],
+   plats:[[500,340,120],[700,260,100],[1050,330,130],
+          [1900,350,110],[2150,270,110],[2400,340,120],[2700,300,140],[3000,360,110],
+          [3800,340,120],[4100,270,110],[4450,330,130],[4750,290,120],[5030,360,110],
+          [5900,360,120],[6050,300,110]],
+   cubes:[[560,300],[745,225],[1110,295],[1950,315],[2200,235],[2760,265],[3045,325],
+          [3850,305],[4150,235],[4500,295],[4800,255]],
+   candies:[[300,410,0],[380,408,1],[460,410,2],[610,302,0],[765,218,1],[900,410,2],[1115,292,0],[1250,410,1],
+            [1800,410,2],[2100,410,0],[2320,410,1],[2455,302,2],[2620,410,0],[2950,410,1],[3150,410,2],
+            [3720,410,0],[3960,410,1],[4310,410,2],[4515,292,0],[4700,410,1],[5000,410,2],[5085,322,0],
+            [5800,410,1],[5950,322,2],[6100,262,0],[6200,410,1]],
+   gems:[[1050,292],[2400,300],[4750,250],[5900,320]],
+   star:[6055,256],
+   pal:[
+    {x:-240, skyT:"#5FB6E8",skyB:"#D8F0FA",far:"#A9D9A2",near:"#7CC47F",grass:"#57AC5D",dirt:"#8A5A3B",tree:"#3E8E52",trunk:"#6E4327"},
+    {x:1550, skyT:"#5FB6E8",skyB:"#D8F0FA",far:"#A9D9A2",near:"#7CC47F",grass:"#57AC5D",dirt:"#8A5A3B",tree:"#3E8E52",trunk:"#6E4327"},
+    {x:1900, skyT:"#3E97BC",skyB:"#C4EAD9",far:"#7FB99B",near:"#4F9B78",grass:"#3F8F5C",dirt:"#5E4630",tree:"#2C7A55",trunk:"#4E3A26"},
+    {x:3440, skyT:"#3E97BC",skyB:"#C4EAD9",far:"#7FB99B",near:"#4F9B78",grass:"#3F8F5C",dirt:"#5E4630",tree:"#2C7A55",trunk:"#4E3A26"},
+    {x:3800, skyT:"#E98E56",skyB:"#FFE0A8",far:"#B47FA6",near:"#8E5F91",grass:"#9BA04F",dirt:"#77502F",tree:"#7C5A9E",trunk:"#5C4030"},
+    {x:99999,skyT:"#E98E56",skyB:"#FFE0A8",far:"#B47FA6",near:"#8E5F91",grass:"#9BA04F",dirt:"#77502F",tree:"#7C5A9E",trunk:"#5C4030"}]
+ },
+ { name:"ממלכת השלג", emoji:"❄️", x0:-240, x1:6600, flagX:6350, seed:5551212,
+   deco:"snow", weather:"snow", water:"#A8D8EF",
+   segs:[[-240,1350],[1650,3200],[3560,5150],[5630,6600]],
+   bridges:[[1350,1650,3],[3200,3560,4],[5150,5630,5]],
+   plats:[[420,350,110],[640,270,100],[880,210,90],[1080,330,120],
+          [1850,350,110],[2080,270,100],[2330,340,120],[2580,260,110],[2830,330,120],[3050,360,100],
+          [3720,340,120],[3980,260,110],[4230,330,120],[4490,250,110],[4740,320,120],[4980,360,100],
+          [5850,360,110],[6000,300,110]],
+   cubes:[[470,315],[690,235],[925,175],[1120,295],
+          [1900,315],[2130,235],[2630,225],[2880,295],[3095,325],
+          [3770,305],[4030,225],[4540,215],[4790,285],[5025,325]],
+   candies:[[300,410,0],[520,410,1],[700,410,2],[930,165,0],[1150,410,1],
+            [1750,410,2],[1950,410,0],[2180,410,1],[2380,300,2],[2500,410,0],[2700,410,1],[2930,410,2],[3100,410,0],
+            [3650,410,1],[3900,410,2],[4130,410,0],[4280,290,1],[4600,410,2],[4830,410,0],[5060,410,1],
+            [5750,410,2],[5900,320,0],[6050,260,1],[6180,410,2]],
+   gems:[[640,230],[2580,220],[4490,210],[5850,320]],
+   star:[930,132],
+   pal:[
+    {x:-240, skyT:"#7FB5D9",skyB:"#EAF4FB",far:"#C9DEEC",near:"#AECBDF",grass:"#F2F7FB",dirt:"#9FB4C4",tree:"#2F6B4F",trunk:"#6B4A32"},
+    {x:2900, skyT:"#7FB5D9",skyB:"#EAF4FB",far:"#C9DEEC",near:"#AECBDF",grass:"#F2F7FB",dirt:"#9FB4C4",tree:"#2F6B4F",trunk:"#6B4A32"},
+    {x:3900, skyT:"#8A7FC9",skyB:"#FBD9E8",far:"#B9A6D8",near:"#9186C4",grass:"#EAF0F8",dirt:"#8A93B8",tree:"#3E5F8A",trunk:"#5C4030"},
+    {x:99999,skyT:"#8A7FC9",skyB:"#FBD9E8",far:"#B9A6D8",near:"#9186C4",grass:"#EAF0F8",dirt:"#8A93B8",tree:"#3E5F8A",trunk:"#5C4030"}]
+ },
+ { name:"ארץ הממתקים", emoji:"🍭", x0:-240, x1:6750, flagX:6500, seed:31337,
+   deco:"candy", weather:"sparkle", water:"#F585AF",
+   segs:[[-240,1400],[1700,3300],[3660,5300],[5780,6750]],
+   bridges:[[1400,1700,4],[3300,3660,5],[5300,5780,6]],
+   plats:[[400,350,110],[620,270,100],[850,200,90],[1060,280,100],[1250,350,110],
+          [1850,350,110],[2080,270,100],[2320,200,90],[2540,270,100],[2760,340,110],[2980,260,100],[3180,330,110],
+          [3800,340,110],[4030,260,100],[4260,190,90],[4480,260,100],[4700,330,110],[4930,250,100],[5150,330,110],
+          [5950,360,110],[6120,300,110],[6290,240,110]],
+   cubes:[[450,315],[670,235],[895,165],[1105,245],[1295,315],
+          [1900,315],[2130,235],[2365,165],[2585,235],[2810,305],[3030,225],[3225,295],
+          [3850,305],[4080,225],[4305,155],[4750,295],[4975,215]],
+   candies:[[300,410,0],[360,410,1],[420,410,2],[560,410,0],[740,410,1],[900,155,2],[1000,410,0],[1150,410,1],[1300,305,2],
+            [1780,410,0],[1950,410,1],[2100,410,2],[2330,155,0],[2450,410,1],[2620,410,2],[2900,410,0],[3080,410,1],[3230,285,2],
+            [3750,410,0],[3920,410,1],[4100,410,2],[4310,145,0],[4420,410,1],[4600,410,2],[4800,410,0],[5000,410,1],[5180,285,2],
+            [5880,410,0],[6000,410,1],[6130,260,2],[6300,200,0],[6450,410,1]],
+   gems:[[850,160],[2320,160],[4930,205],[6290,195]],
+   star:[4305,95],
+   pal:[
+    {x:-240, skyT:"#FF9EC0",skyB:"#FFEFD6",far:"#FFC9DE",near:"#F9A8C9",grass:"#8FD8A8",dirt:"#7A4A32",tree:"#FF6FA5",trunk:"#F5F1E6"},
+    {x:2900, skyT:"#FF9EC0",skyB:"#FFEFD6",far:"#FFC9DE",near:"#F9A8C9",grass:"#8FD8A8",dirt:"#7A4A32",tree:"#FF6FA5",trunk:"#F5F1E6"},
+    {x:3900, skyT:"#C77FE8",skyB:"#FFD6EE",far:"#E3A6E8",near:"#C486DD",grass:"#A8E8C9",dirt:"#6B3E2A",tree:"#FFD166",trunk:"#F5F1E6"},
+    {x:99999,skyT:"#C77FE8",skyB:"#FFD6EE",far:"#E3A6E8",near:"#C486DD",grass:"#A8E8C9",dirt:"#6B3E2A",tree:"#FFD166",trunk:"#F5F1E6"}]
+ },
+ /* ===== מכאן העולמות המתקדמים (שיחה 4): קצרים יותר לרוחב, גבוהים לעומק.
+        כל עולם מציג מכניקה אחת חדשה, והאחרונים משלבים. ===== */
+ { name:"הרי האש", emoji:"🌋", x0:-240, x1:5340, flagX:5130, seed:44011,
+   deco:"volcano", weather:"ember", water:"#E8562F", foam:"rgba(255,220,120,0.7)",
+   sunCol:"#FFD9A8", sunGlow:"rgba(255,190,110,0.75)", sunGlow2:"rgba(255,150,80,0.4)",
+   sunGlow0:"rgba(255,150,80,0)", cloudCol:"rgba(120,86,96,0.55)",   // הנוזל הוא לבה — נפילה = חזרה לנקודת ביניים, כרגיל
+   segs:[[-240,1520],[1820,3420],[3800,5340]],
+   bridges:[[1520,1820,4],[3420,3800,5]],
+   plats:[[420,330,110],[640,180,110],[900,300,120],[1140,230,110],[1330,140,100],
+          [1900,330,110],[2120,175,110],[2370,290,120],[2610,215,110],[2850,140,100],[3110,285,110],
+          [3900,330,110],[4120,190,110],[4380,295,120],[4620,220,110],[4880,150,100],[5110,300,110]],
+   springs:[[560,440],[1250,440],[2040,440],[2760,440],[3260,440],[4030,440],[4800,440]],
+   cubes:[[470,295],[690,145],[950,265],[1190,195],[1375,105],
+          [1950,295],[2170,140],[2420,255],[2660,180],[2895,105],[3160,250],
+          [3950,295],[4170,155],[4430,260],[4670,185],[4925,115]],
+   candies:[[300,410,1],[700,410,0],[1050,410,2],[1400,410,1],
+            [1880,410,0],[2260,410,2],[2540,410,1],[2980,410,0],[3340,410,2],
+            [3860,410,1],[4260,410,0],[4540,410,2],[4960,410,1],[5220,410,0]],
+   gems:[[560,150],[2040,150],[3260,150],[4800,130]],
+   star:[1250,118],
+   pal:[
+    {x:-240, skyT:"#3A2038",skyB:"#E8734A",far:"#6B3A46",near:"#4A2635",grass:"#5E3A3A",dirt:"#3A2028",tree:"#8A3A2A",trunk:"#4A2A20"},
+    {x:2600, skyT:"#3A2038",skyB:"#E8734A",far:"#6B3A46",near:"#4A2635",grass:"#5E3A3A",dirt:"#3A2028",tree:"#8A3A2A",trunk:"#4A2A20"},
+    {x:3900, skyT:"#5A1F2E",skyB:"#FFB05A",far:"#7A3A3A",near:"#5A2A30",grass:"#6E4038",dirt:"#42232A",tree:"#B04A2A",trunk:"#54301F"},
+    {x:99999,skyT:"#5A1F2E",skyB:"#FFB05A",far:"#7A3A3A",near:"#5A2A30",grass:"#6E4038",dirt:"#42232A",tree:"#B04A2A",trunk:"#54301F"}]
+ },
+ { name:"מפרץ הבועות", emoji:"🫧", x0:-240, x1:5380, flagX:5170, seed:52028,
+   deco:"beach", weather:"bubble", water:"#2FB6C9",
+   segs:[[-240,1500],[1800,3440],[3820,5380]],
+   bridges:[[1500,1800,4],[3440,3820,5]],
+   plats:[[400,340,110],[880,250,110],[1300,340,110],
+          [1880,340,110],[2320,250,110],[2760,330,110],[3200,250,110],
+          [3900,340,110],[4340,250,110],[4780,330,110],[5120,250,110]],
+   movers:[[660,300,90,0,-110,4.0,0],[1090,270,90,130,0,5.0,1.2],
+           [2080,290,90,0,-120,4.4,0.5],[2560,260,90,150,0,5.4,0],[3000,290,90,0,-110,3.8,1.8],
+           [4100,290,90,0,-125,4.6,0.3],[4560,260,90,150,0,5.2,1.0],[4980,290,90,0,-110,4.2,2.0]],
+   cubes:[[440,305],[675,185],[925,215],[1105,155],[1340,305],
+          [1925,305],[2100,175],[2365,215],[2575,145],[3015,175],[3245,215],
+          [3945,305],[4115,175],[4385,215],[4575,145],[4995,175],[5165,215]],
+   candies:[[300,410,0],[560,410,1],[820,410,2],[1180,410,0],[1420,410,1],
+            [1860,410,2],[2200,410,0],[2480,410,1],[2880,410,2],[3300,410,0],
+            [3880,410,1],[4220,410,2],[4680,410,0],[5060,410,1],[5260,410,2]],
+   gems:[[660,180],[2560,140],[4560,140]],
+   star:[3200,205],
+   pal:[
+    {x:-240, skyT:"#4FC3E8",skyB:"#FFF4D6",far:"#7FD9D0",near:"#4FBFB8",grass:"#F2E2B8",dirt:"#D9BE8A",tree:"#2FA37A",trunk:"#8A6A42"},
+    {x:2600, skyT:"#4FC3E8",skyB:"#FFF4D6",far:"#7FD9D0",near:"#4FBFB8",grass:"#F2E2B8",dirt:"#D9BE8A",tree:"#2FA37A",trunk:"#8A6A42"},
+    {x:3900, skyT:"#2FA8D8",skyB:"#CFF3EE",far:"#5FC9C4",near:"#33A8A6",grass:"#EAD9AE",dirt:"#C9AE7A",tree:"#1F8F6E",trunk:"#7A5C38"},
+    {x:99999,skyT:"#2FA8D8",skyB:"#CFF3EE",far:"#5FC9C4",near:"#33A8A6",grass:"#EAD9AE",dirt:"#C9AE7A",tree:"#1F8F6E",trunk:"#7A5C38"}]
+ },
+ { name:"מדבר הפירמידות", emoji:"🏜️", x0:-240, x1:5420, flagX:5210, seed:61099,
+   deco:"desert", weather:"sand", water:"#D9A05A", foam:"rgba(255,240,200,0.5)",
+   sunCol:"#FFF6D0", cloudCol:"rgba(255,255,255,0.5)",     // חולות טובעניים
+   segs:[[-240,1540],[1840,3480],[3860,5420]],
+   bridges:[[1540,1840,4],[3480,3860,5]],
+   plats:[[420,330,110],[660,225,100],[980,320,110],[1250,215,100],
+          [1920,330,110],[2200,225,100],[2500,320,110],[2790,215,100],[3090,310,110],[3330,205,100],
+          [3960,330,110],[4240,225,100],[4540,320,110],[4830,210,100],[5130,300,110]],
+   feathers:[[860,395],[2360,395],[4400,395]],
+   cubes:[[465,295],[705,190],[1025,285],[1295,180],
+          [1965,295],[2245,190],[2545,285],[2835,180],[3135,275],[3375,170],
+          [4005,295],[4285,190],[4585,285],[4875,175],[5175,265]],
+   candies:[[300,410,1],[620,410,0],[940,410,2],[1240,410,1],[1460,410,0],
+            [1880,410,2],[2120,410,1],[2420,410,0],[2700,410,2],[3000,410,1],[3400,410,0],
+            [3900,410,2],[4180,410,1],[4480,410,0],[4760,410,2],[5060,410,1],[5300,410,0]],
+   gems:[[860,175],[2360,165],[4400,150]],
+   star:[3375,25],                                    // רק עם נוצה — קפיצה כפולה מהפלטפורמה הגבוהה
+   pal:[
+    {x:-240, skyT:"#F2A65A",skyB:"#FFE9C0",far:"#E0B07A",near:"#C98F5A",grass:"#E8C88A",dirt:"#B8834E",tree:"#5E9E5A",trunk:"#8A6A42"},
+    {x:2600, skyT:"#F2A65A",skyB:"#FFE9C0",far:"#E0B07A",near:"#C98F5A",grass:"#E8C88A",dirt:"#B8834E",tree:"#5E9E5A",trunk:"#8A6A42"},
+    {x:3900, skyT:"#C95A6E",skyB:"#FFD2A0",far:"#C98A8A",near:"#A96A6E",grass:"#D9AE7A",dirt:"#8A5A42",tree:"#4E8E5A",trunk:"#6E5236"},
+    {x:99999,skyT:"#C95A6E",skyB:"#FFD2A0",far:"#C98A8A",near:"#A96A6E",grass:"#D9AE7A",dirt:"#8A5A42",tree:"#4E8E5A",trunk:"#6E5236"}]
+ },
+ { name:"יער הלילה", emoji:"🌙", x0:-240, x1:5460, flagX:5250, seed:70213,
+   deco:"night", weather:"firefly", water:"#2A3A6E", foam:"rgba(180,200,255,0.5)",
+   moon:1, sunCol:"#E4EAFF", sunGlow:"rgba(200,215,255,0.5)", sunGlow2:"rgba(170,190,255,0.22)",
+   sunGlow0:"rgba(170,190,255,0)", cloudCol:"rgba(58,64,108,0.62)",
+   segs:[[-240,1560],[1860,3500],[3880,5460]],
+   bridges:[[1560,1860,4],[3500,3880,5]],
+   plats:[[440,330,110],[760,215,100],[1120,330,110],[1400,200,100],
+          [1940,330,110],[2560,215,100],[2900,320,110],[3220,180,100],
+          [3980,330,110],[4300,300,110],[4640,200,100],[5000,300,110],[5220,180,100]],
+   springs:[[600,440],[2020,440],[4120,440]],
+   movers:[[1720,300,90,0,-110,4.2,0.4],[3060,270,90,140,0,5.0,1.0],[4820,280,90,0,-120,4.4,1.6]],
+   feathers:[[2260,395],[4460,395]],
+   cubes:[[485,295],[805,180],[1165,295],[1445,165],
+          [1985,295],[2285,155],[2605,180],[2945,285],[3265,145],
+          [4025,295],[4345,265],[4685,165],[5045,265],[5265,145]],
+   candies:[[300,410,2],[680,410,0],[980,410,1],[1280,410,2],[1480,410,0],
+            [1900,410,1],[2160,410,2],[2440,410,0],[2760,410,1],[3120,410,2],[3400,410,0],
+            [3920,410,1],[4200,410,2],[4500,410,0],[4900,410,1],[5140,410,2],[5340,410,0]],
+   gems:[[600,150],[2020,150],[4120,145]],
+   star:[3060,150],
+   pal:[
+    {x:-240, skyT:"#141C3A",skyB:"#3A2E6E",far:"#232B52",near:"#1A2040",grass:"#2E4A46",dirt:"#1E2A32",tree:"#2A6E5E",trunk:"#2A2036"},
+    {x:2600, skyT:"#141C3A",skyB:"#3A2E6E",far:"#232B52",near:"#1A2040",grass:"#2E4A46",dirt:"#1E2A32",tree:"#2A6E5E",trunk:"#2A2036"},
+    {x:3900, skyT:"#0E1430",skyB:"#5A3A7E",far:"#2A2A5E",near:"#1E1E44",grass:"#2A4A56",dirt:"#1A2430",tree:"#2A5E7E",trunk:"#241C30"},
+    {x:99999,skyT:"#0E1430",skyB:"#5A3A7E",far:"#2A2A5E",near:"#1E1E44",grass:"#2A4A56",dirt:"#1A2430",tree:"#2A5E7E",trunk:"#241C30"}]
+ },
+ /* עולם הבונוס: בלי שאלות. אחרי שהמיפוי נגמר זה הפרס — כל המכניקות יחד,
+    ורק כאן יש שלושה גשרים. הקוביות כולן חופשיות (thread=null במסלול). */
+ { name:"מגדל העננים", emoji:"🏰", x0:-240, x1:5500, flagX:5290, seed:88888,
+   deco:"sky", weather:"starry", water:"#D6E4FF", foam:"rgba(255,255,255,0.85)",
+   segs:[[-240,1400],[1700,2900],[3200,4400],[4700,5500]],
+   bridges:[[1400,1700,3],[2900,3200,4],[4400,4700,5]],
+   plats:[[380,330,110],[700,200,100],[1000,320,110],[1240,180,100],
+          [1780,320,110],[2060,190,100],[2380,310,110],[2660,170,100],
+          [3280,320,110],[3560,190,100],[3880,300,110],[4160,170,100],
+          [4780,320,110],[5040,190,100],[5260,300,110]],
+   springs:[[540,440],[1900,440],[3420,440],[4920,440]],
+   movers:[[860,260,90,0,-110,4.0,0],[2220,250,90,140,0,5.0,1.2],
+           [3720,250,90,0,-120,4.4,0.6],[4300,260,90,150,0,5.2,1.8]],
+   feathers:[[1120,395],[2520,395],[4020,395]],
+   cubes:[[425,295],[745,165],[1045,285],[1285,145],
+          [1825,285],[2105,155],[2425,275],[2705,135],
+          [3325,285],[3605,155],[3925,265],[4205,135],
+          [4825,285],[5085,155],[5305,265]],
+   candies:[[300,410,0],[600,410,1],[900,410,2],[1180,410,0],[1340,410,1],
+            [1760,410,2],[2000,410,0],[2300,410,1],[2600,410,2],[2820,410,0],
+            [3260,410,1],[3500,410,2],[3800,410,0],[4100,410,1],[4340,410,2],
+            [4760,410,0],[5000,410,1],[5200,410,2],[5380,410,0]],
+   gems:[[540,150],[1900,150],[3420,150],[4920,145]],
+   star:[2705,30],                                    // הכוכב הקשה ביותר — נוצה + פלטפורמה גבוהה
+   pal:[
+    {x:-240, skyT:"#6FA8FF",skyB:"#FFE8F5",far:"#C9D9FF",near:"#A6BFF5",grass:"#F5F8FF",dirt:"#B9C6E8",tree:"#F5A6C9",trunk:"#D9C0E8"},
+    {x:2400, skyT:"#6FA8FF",skyB:"#FFE8F5",far:"#C9D9FF",near:"#A6BFF5",grass:"#F5F8FF",dirt:"#B9C6E8",tree:"#F5A6C9",trunk:"#D9C0E8"},
+    {x:3600, skyT:"#8A6FE8",skyB:"#FFD6E8",far:"#C0B0F5",near:"#9E8AE0",grass:"#FFF3FA",dirt:"#C4B0DE",tree:"#FFD166",trunk:"#E8D0F5"},
+    {x:99999,skyT:"#8A6FE8",skyB:"#FFD6E8",far:"#C0B0F5",near:"#9E8AE0",grass:"#FFF3FA",dirt:"#C4B0DE",tree:"#FFD166",trunk:"#E8D0F5"}]
+ }
+];
+
+/* ---------- palette lerp ---------- */
+function hex2rgb(h){return [parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];}
+function mixHex(a,b,t){const A=hex2rgb(a),B=hex2rgb(b);
+  return `rgb(${Math.round(A[0]+(B[0]-A[0])*t)},${Math.round(A[1]+(B[1]-A[1])*t)},${Math.round(A[2]+(B[2]-A[2])*t)})`;}
+function palAt(x){
+  const stops=W.pal;
+  for(let i=0;i<stops.length-1;i++){
+    const a=stops[i],b=stops[i+1];
+    if(x<=b.x){
+      const t=Math.max(0,Math.min(1,(x-a.x)/(b.x-a.x||1)));
+      const out={};
+      for(const k in a){ if(k==="x")continue; out[k]=mixHex(a[k],b[k],t); }
+      return out;
+    }
+  }
+  const last=stops[stops.length-1],out={};
+  for(const k in last){ if(k!=="x") out[k]=last[k]; }
+  return out;
+}
+
+/* ---------- seeded rng ---------- */
+function mulberry32(seed){return function(){let t=seed+=0x6D2B79F5;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};}
+const CLOUDS=[];
+{
+  const rnd=mulberry32(42);
+  for(let i=0;i<12;i++) CLOUDS.push({x:rnd()*2600, y:40+rnd()*120, s:0.7+rnd()*0.9, v:5+rnd()*8});
+}
+
+/* ---------- game state ---------- */
+let W, bridges, cubes, candies, gems, feathers, springs, movers, starItem,
+    PLATS, DECOR, TUFTS, player, cam, particles, floaters, butterflies, state;
+
+function initGame(){
+  state={stageIdx:0,worldIdx:0,cubes:0,cubesTotal:0,candy:0,stars:0,time:0,running:false,
+         flagHit:false,flagT:0,gateMsgT:0};
+  loadWorld(0);
+}
+/* i = מקום במסלול (לא אינדקס ב-WORLDS): עולם שנשמט מהמסלול, כמו אנגלית
+   בכיתות א׳–ב׳, פשוט לא מופיע בו. p.w הוא העולם הוויזואלי בפועל. */
+function loadWorld(i){
+  const plan=curPlan();
+  const p=plan[Math.max(0,Math.min(i,plan.length-1))];
+  state.stageIdx=i; state.worldIdx=p?p.w:0; W=WORLDS[state.worldIdx];
+  state.flagHit=false; state.gateMsgT=0;
+  state.stuckT=0; state.stuckX=null; state.stuckHinted=false;
+  bridges=W.bridges.map(b=>({x0:b[0],x1:b[1],need:b[2],built:false,building:false,t:0,hold:false,mode:null,coolT:0,
+    planks:b[2], knocked:0}));                       // קרש אחד לכל קובייה — בדיוק need
+  cubes=W.cubes.map((c,j)=>({x:c[0],y:c[1],idx:j,taken:false,ph:j*1.3,hold:false,tries:0}));
+  candies=W.candies.map((c,j)=>({x:c[0],y:c[1],kind:c[2],taken:false,ph:j*0.9}));
+  gems=(W.gems||[]).map((g,j)=>({x:g[0],y:g[1],taken:false,ph:j*0.8}));
+  feathers=(W.feathers||[]).map((f,j)=>({x:f[0],y:f[1],taken:false,ph:j*1.1}));
+  springs=(W.springs||[]).map(s=>({x:s[0],y:s[1],t:0}));
+  movers=(W.movers||[]).map(m=>({bx:m[0],by:m[1],w:m[2],ax:m[3]||0,ay:m[4]||0,
+                                 per:m[5]||4,ph:m[6]||0,x:m[0],y:m[1],dx:0,dy:0,h:16}));
+  starItem=W.star?{x:W.star[0],y:W.star[1],taken:false}:null;
+  PLATS=W.plats.map(p2=>({x:p2[0],y:p2[1],w:p2[2],h:16}));
+  player={x:40,y:GY-PH,vx:0,vy:0,face:1,onGround:false,coyote:0,jbuf:0,jcut:true,
+          walk:0,squash:0,blink:0,checkX:40,wings:0,airJumps:0,ride:null};
+  cam={x:W.x0};
+  particles=[]; floaters=[];
+  moveMovers(0);
+  butterflies=Array.from({length:7},(_,j)=>({bx:400+j*880,ph:j*2.1,r:30+j*7}));
+  DECOR=[];
+  {
+    const rnd=mulberry32(W.seed);
+    for(const [x0,x1] of W.segs){
+      let x=x0+90;
+      while(x<x1-90){
+        const r=rnd();
+        if(r<0.34)      DECOR.push({t:"tree", x, s:0.8+rnd()*0.6, c:rnd()});
+        else if(r<0.58) DECOR.push({t:"bush", x, s:0.7+rnd()*0.6, c:rnd()});
+        else            DECOR.push({t:"flower", x, s:1, c:rnd()});
+        x+=120+rnd()*160;
+      }
+    }
+  }
+  TUFTS=[];
+  {
+    const rnd=mulberry32(W.seed+7);
+    for(const [x0,x1] of W.segs){ let x=x0+20; while(x<x1-20){ TUFTS.push({x, o:rnd()}); x+=46+rnd()*70; } }
+  }
+  const subj=p&&p.subjectHe?` · ${SUBJ_EMOJI[p.subject]||""} ${p.subjectHe}`:
+             (session?" · 🎁 בונוס":"");
+  document.getElementById("worldChip").innerHTML=
+    `${W.emoji} <b>עולם ${i+1}/${plan.length}</b><small>${subj}</small>`;
+  syncHud();
+}
+/* פלטפורמה נעה: תנודה סינוסואידית סביב נקודת הבסיס. dx/dy נשמרים כדי
+   שהשחקן שעומד עליה ייסחף איתה (אחרת הוא "מחליק" ונופל). */
+function moveMovers(t){
+  for(const m of movers){
+    const a=Math.sin(t*2*Math.PI/m.per+m.ph);
+    const nx=m.bx+m.ax*a, ny=m.by+m.ay*a;
+    m.dx=nx-m.x; m.dy=ny-m.y; m.x=nx; m.y=ny;
+  }
+}
+
+/* ---------- canvas ---------- */
+const cv=document.getElementById("game"), ctx=cv.getContext("2d");
+let scale=1, viewW=960;
+function resize(){
+  const dpr=window.devicePixelRatio||1;
+  cv.width=Math.round(cv.clientWidth*dpr); cv.height=Math.round(cv.clientHeight*dpr);
+  scale=cv.height/H; viewW=cv.width/scale;
+}
+window.addEventListener("resize",resize);
+
+/* ---------- audio ---------- */
+const audio={ctx:null,muted:false};
+try{ audio.muted=localStorage.getItem("cq_mute")==="1"; }catch(e){}
+function ac(){ if(!audio.ctx){ try{ audio.ctx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } return audio.ctx; }
+function tone(freq,dur,type,vol,slideTo,delay){
+  const c=ac(); if(!c||audio.muted) return;
+  const t0=c.currentTime+(delay||0);
+  const o=c.createOscillator(), g=c.createGain();
+  o.type=type||"square"; o.frequency.setValueAtTime(freq,t0);
+  if(slideTo) o.frequency.exponentialRampToValueAtTime(slideTo,t0+dur);
+  g.gain.setValueAtTime(vol||0.12,t0); g.gain.exponentialRampToValueAtTime(0.001,t0+dur);
+  o.connect(g).connect(c.destination); o.start(t0); o.stop(t0+dur+0.02);
+}
+function noiseBurst(dur,vol){
+  const c=ac(); if(!c||audio.muted) return;
+  const n=Math.floor(c.sampleRate*dur), buf=c.createBuffer(1,n,c.sampleRate), d=buf.getChannelData(0);
+  for(let i=0;i<n;i++) d[i]=(Math.random()*2-1)*(1-i/n);
+  const s=c.createBufferSource(); s.buffer=buf;
+  const f=c.createBiquadFilter(); f.type="lowpass"; f.frequency.value=700;
+  const g=c.createGain(); g.gain.value=vol||0.25;
+  s.connect(f).connect(g).connect(c.destination); s.start();
+}
+const sfx={
+  jump(){ tone(240,0.12,"square",0.09,480); },
+  candy(){ tone(880,0.09,"sine",0.14,1320); tone(1320,0.12,"sine",0.10,1760,0.06); },
+  cube(){ [523,659,784,1047].forEach((f,i)=>tone(f,0.14,"triangle",0.13,null,i*0.07)); },
+  knock(){ tone(170,0.08,"triangle",0.2,120); },
+  built(){ [523,659,784].forEach((f,i)=>tone(f,0.3,"triangle",0.12,null,i*0.02)); },
+  splash(){ noiseBurst(0.35,0.3); tone(300,0.25,"sine",0.08,120); },
+  spring(){ tone(300,0.22,"sine",0.14,1100); },
+  wing(){ tone(660,0.16,"sine",0.10,1320); tone(990,0.14,"triangle",0.07,1480,0.05); },
+  gem(){ [988,1319,1568].forEach((f,i)=>tone(f,0.16,"sine",0.11,null,i*0.05)); },
+  star(){ [784,988,1319,1568,2093].forEach((f,i)=>tone(f,0.24,"triangle",0.11,null,i*0.09)); },
+  win(){ [523,523,659,784,1047,784,1047].forEach((f,i)=>tone(f,0.22,"square",0.09,null,i*0.13)); }
+};
+
+/* ---------- input ----------
+   שתי תקלות שדווחו מהשטח (אוג' 2026) ושתיהן מקורן כאן:
+
+   «הדמות זזה ולא מפסיקה» — keydown נרשם, ואז החלון מאבד פוקוס (מעבר ללשונית,
+   alt-tab, הודעה שקופצת במכשיר, לחיצה על חלון אחר). ה-keyup נמסר לחלון שקיבל
+   את הפוקוס ולא לנו, keys.R נשאר true לנצח, והדמות רצה ימינה עד קץ המסך. לכן
+   כל אירוע של איבוד פוקוס מנקה את מצב הקלט.
+
+   «הדמות לא מגיבה» בנייד — האצבע גולשת מעט מכפתור בן 74px, pointerleave שיחרר
+   את המקש, ו-pointerup כבר לא הגיע לכפתור. לכן לוכדים את המצביע
+   (setPointerCapture), מנהלים מפת pointerId → מקש, ומחזיקים רשת ביטחון ברמת
+   החלון. pointerleave נמחק — עם לכידה הוא רק מזיק. */
+const keys={L:false,R:false};
+const touchPid=Object.create(null);
+function press(k){
+  if(k==="L")keys.L=true; if(k==="R")keys.R=true;
+  if(k==="J"){ player.jbuf=0.12; player.jheld=true; }
+}
+function release(k){
+  if(k==="L")keys.L=false; if(k==="R")keys.R=false;
+  if(k==="J"){ player.jheld=false;
+    if(player.vy<0&&!player.jcut){ player.vy*=0.45; player.jcut=true; } }
+}
+function clearKeys(){
+  keys.L=false; keys.R=false;
+  try{ if(player){ player.jheld=false; player.jbuf=0; } }catch(e){}
+  for(const id in touchPid) delete touchPid[id];
+}
+/* **מקלדת של המשחק מול מקלדת של טופס.** בלי ההחרגה הזאת כל הקלדה בשדה טקסט
+   נוסעת גם למשחק: הרווח נבלע ב-`preventDefault` והדמות קופצת במקומו, האותיות
+   a ו-d מזיזות אותה, r מבצע respawn ו-m משתיק. נצפה בפועל: שם ילד/ה שהוקלד
+   «בדיקה QA» נשמר כ«בדיקהQA» — כלומר כל שם עם רווח, וזה רוב השמות המלאים. */
+const typingInField=e=>{
+  const t=e.target;
+  if(!t) return false;
+  const tag=(t.tagName||"").toLowerCase();
+  return tag==="input"||tag==="textarea"||tag==="select"||!!t.isContentEditable;
+};
+window.addEventListener("keydown",e=>{
+  if(typingInField(e)) return;
+  if(["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"," ","Spacebar"].includes(e.key)) e.preventDefault();
+  if(e.repeat) return;
+  const k=e.key.toLowerCase();
+  if(e.key==="ArrowLeft"||k==="a") press("L");
+  if(e.key==="ArrowRight"||k==="d") press("R");
+  if(e.key===" "||e.key==="ArrowUp"||k==="w") press("J");
+  if(k==="m") toggleMute();
+  if(k==="r"&&state.running&&!state.flagHit) respawn(false);
+});
+window.addEventListener("keyup",e=>{
+  /* גם כאן: בלי ההחרגה, שחרור מקש בתוך שדה טקסט היה מגיע למשחק. מקש
+     שנשאר לחוץ בזמן מעבר פוקוס מנוקה ממילא ב-blur/focus/visibilitychange. */
+  if(typingInField(e)) return;
+  const k=e.key.toLowerCase();
+  if(e.key==="ArrowLeft"||k==="a") release("L");
+  if(e.key==="ArrowRight"||k==="d") release("R");
+  if(e.key===" "||e.key==="ArrowUp"||k==="w") release("J");
+});
+/* איבוד פוקוס = שחרור כל המקשים. זה התיקון ל«רצה ולא עוצרת». */
+window.addEventListener("blur",clearKeys);
+window.addEventListener("focus",clearKeys);
+window.addEventListener("pagehide",clearKeys);
+document.addEventListener("visibilitychange",()=>{ if(document.hidden) clearKeys(); });
+/* touch */
+{
+  if("ontouchstart" in window||navigator.maxTouchPoints>0){
+    document.getElementById("touch").classList.add("on");
+    document.getElementById("cq-root").classList.add("touch"); // מסתיר את רמזי המקלדת
+  }
+  const bind=(id,k)=>{const b=document.getElementById(id);
+    b.addEventListener("pointerdown",e=>{
+      e.preventDefault(); ac();
+      /* לכידת המצביע: מכאן והלאה כל אירוע של האצבע הזאת מגיע לכפתור, גם אם
+         היא גלשה ממנו. בלי זה pointerup הולך לאיבוד והמקש נתקע לחוץ. */
+      try{ b.setPointerCapture(e.pointerId); }catch(err){}
+      touchPid[e.pointerId]=k; press(k);
+    });
+    const up=e=>{ if(touchPid[e.pointerId]===k){ delete touchPid[e.pointerId]; release(k); } };
+    b.addEventListener("pointerup",e=>{ e.preventDefault(); up(e); });
+    b.addEventListener("pointercancel",up);
+  };
+  bind("tL","L"); bind("tR","R"); bind("tJ","J");
+  /* רשת ביטחון: אצבע שהורמה בכל מקום אחר במסך משחררת את המקש שהיא החזיקה. */
+  const winUp=e=>{ const k=touchPid[e.pointerId];
+    if(k){ delete touchPid[e.pointerId]; release(k); } };
+  window.addEventListener("pointerup",winUp,true);
+  window.addEventListener("pointercancel",winUp,true);
+}
+
+/* ---------- HUD / overlays ---------- */
+const $=id=>document.getElementById(id);
+function syncHud(){
+  $("hudCubes").textContent=state.cubes; $("hudCandy").textContent=state.candy;
+  $("hudStars").textContent=state.stars;
+  const w=player?Math.ceil(player.wings):0;
+  $("wingChip").style.display=w>0?"":"none";
+  $("hudWings").textContent=w;
+}
+let toastTimer=null;
+function showToast(msg,ms){
+  const el=$("toastMsg"); el.textContent=msg; el.classList.add("show");
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.classList.remove("show"),ms||2200);
+}
+function toggleMute(){
+  audio.muted=!audio.muted;
+  $("muteBtn").textContent=audio.muted?"🔇":"🔊";
+  try{ localStorage.setItem("cq_mute",audio.muted?"1":"0"); }catch(e){}
+}
+$("muteBtn").textContent=audio.muted?"🔇":"🔊";
+$("muteBtn").onclick=()=>{ac();toggleMute();};
+/* «נתקעתי» — הצלה שאינה מוחקת כלום: משחררת מקשים תקועים, מחזירה את הדמות
+   לנקודת הביניים ומחזירה את המשחק לרוץ אם נשאר עצור. זה מה שילד צריך
+   כשמשהו נתקע, ולכן הוא כפתור ולא מקש (בנייד אין R). */
+$("unstickBtn").onclick=()=>{
+  clearKeys();
+  if(!anyOverlayOpen()){                                // חלונית פתוחה — לא נוגעים בה
+    respawn(false);
+    state.stuckT=0; state.stuckHinted=false;
+    if(!state.flagHit) state.running=true;
+    showToast("חזרתם לנקודת הביניים — קדימה! 💪",2000);
+  }
+};
+/* ⟳ מוחק את כל ההתקדמות. ילד שנתקע לוחץ על מה שנראה כמו הצלה — ולכן
+   הלחיצה הראשונה רק מזהירה, והשנייה (תוך 5 שניות) באמת מאפסת. */
+let restartArmT=null;
+$("restartBtn").onclick=()=>{
+  const t=performance.now();
+  if(restartArmT===null||t-restartArmT>5000){
+    restartArmT=t;
+    showToast("לחיצה נוספת תתחיל את הכול מחדש ותמחק את ההתקדמות. נתקעתם? לחצו 🆘",3600);
+    return;
+  }
+  restartArmT=null;
+  clearProgress();
+  session=null; initGame();
+  $("winOv").classList.add("hidden"); $("repOv").classList.add("hidden");
+  $("qOv").classList.add("hidden"); qUI.open=false;
+  $("brOv").classList.add("hidden"); brBridge=null;
+  refreshResumeBtn();
+  $("introOv").classList.remove("hidden");
+};
+$("againBtn").onclick=()=>{
+  $("winOv").classList.add("hidden");
+  const plan=curPlan();
+  if(state.stageIdx>=plan.length-1){
+    clearProgress(); session=null; initGame(); refreshResumeBtn();
+    $("introOv").classList.remove("hidden"); return;
+  }
+  loadWorld(state.stageIdx+1);
+  state.running=true;
+};
+
+/* ---------- שמירה והמשך ----------
+   נשמר רק בין עולמות (נקודת מצב נקייה: אין מיקום שחקן, אין קוביות באוויר).
+   מפגש של 3 מקצועות ארוך מדי לישיבה אחת — הילד יכול לעצור אחרי כל מקצוע
+   ולחזור, והמנוע האדפטיבי ממשיך בדיוק מאותה מדרגה. */
+/* **המפתח עלה ל-v2 עם מנוע התחנות.** שמירה מהמנוע הישן נושאת מזהי שרשרת
+   שכבר אינם קיימים (numbers / heb_language), ו-resumeSession היה מדלג עליהם
+   בשקט: הילד/ה היה/תה חוזר/ת לעולם 5 עם סולמות שלא נמדדו, ומקבל/ת דוח
+   חצי-מדוד שנראה שלם. עדיף להתחיל מפגש חדש מאשר לייצר מדידה שקרית. */
+const SAVE_KEY="cq_save_v2";
+function buildSaveObj(){
+  return {
+    v:1, ts:Date.now(), age:session.age, grade:session.grade,
+    subject:session.subject||undefined,               // רק בגרסת «מקצוע אחד»
+    runId:authRunId||null,                            // מזהה השורה בענן, אם מחוברים
+    studentId:authStudentId||null,                    // של מי השמירה הזאת (אחים באותו מכשיר)
+    stageIdx:state.stageIdx+1,                        // ממשיכים מהעולם הבא
+    candy:state.candy, cubesTotal:state.cubesTotal, stars:state.stars,
+    elapsed:Math.round((Date.now()-session.startTs)/1000),
+    asked:session.asked, answers:session.answers, diagnoses:session.diagnoses,
+    used:[...session.used],
+    threads:session.threads.map(T=>({id:T.cfg.id, idx:T.idx, startIdx:T.startIdx, good:T.good, bad:T.bad, failStreak:T.failStreak,
+      passed:[...T.passed], failed:[...T.failed], done:T.done, asked:T.asked,
+      failStreak:T.failStreak||0, endReason:T.endReason||null,
+      challenge:!!T.challenge, challengePassed:!!T.challengePassed, result:T.result})),
+    probe:session.probe?{idx:session.probe.idx, asked:session.probe.asked,
+      correct:session.probe.correct, done:session.probe.done,
+      passed:session.probe.passed, items:session.probe.items}:null
+  };
+}
+function saveProgress(){
+  if(!session) return;
+  const o=buildSaveObj();
+  try{ localStorage.setItem(SAVE_KEY,JSON.stringify(o)); }catch(e){}
+  authPushSave(o);                // no-op אם אין sb/authUser; לעולם לא חוסם
+}
+function loadProgress(){
+  try{ const s=localStorage.getItem(SAVE_KEY); const o=s?JSON.parse(s):null;
+       if(!(o&&o.v===1&&o.grade)) return null;
+       if(!saveFitsMode(o)) return null;
+       /* שמירה של אח/ות אחר/ת אינה «להמשיך» של הילד/ה הנוכחי/ת — בלי
+          התנאי הזה הכיתה של הראשון נדבקה לשני. שמירה ישנה בלי studentId
+          נחשבת שייכת (תאימות לאחור). */
+       if(sb&&authStudentId&&o.studentId&&o.studentId!==authStudentId) return null;
+       return o; }catch(e){ return null; }
+}
+function clearProgress(){ try{ localStorage.removeItem(SAVE_KEY); }catch(e){} }
+function resumeSession(sv){
+  pickedAge=sv.age||null; pickedGrade=sv.grade;
+  authRunId=sv.runId||null;
+  pickedSubject=sv.subject||null;
+  newSession(sv.grade,pickedSubject);
+  session.startTs=Date.now()-(sv.elapsed||0)*1000;
+  session.asked=sv.asked||0;
+  session.answers=sv.answers||[]; session.diagnoses=sv.diagnoses||[];
+  session.used=new Set(sv.used||[]); session.stars=sv.stars||0;
+  (sv.threads||[]).forEach(t=>{
+    const T=session.byId[t.id]; if(!T) return;
+    T.idx=t.idx!=null?t.idx:T.idx; T.startIdx=t.startIdx!=null?t.startIdx:T.startIdx;
+    T.good=t.good||0; T.bad=t.bad||0; T.failStreak=t.failStreak||0;
+    T.passed=new Set(t.passed||[]); T.failed=new Set(t.failed||[]);
+    T.asked=t.asked||0; T.failStreak=t.failStreak||0; T.done=!!t.done; T.result=t.result||null;
+    T.challenge=!!t.challenge; T.challengePassed=!!t.challengePassed;
+    /* endReason: קודם מהשדה הגולמי (קיים גם בשמירה מהענן, ששוללת result);
+       נופל ל-result.end_reason רק לשמירות ישנות שנוצרו לפני שהשדה נוסף. */
+    T.endReason=t.endReason||(t.result&&t.result.end_reason)||null;
+    if(T.done&&T.result) session.results.push(T.result);
+  });
+  if(sv.probe&&session.probe) Object.assign(session.probe,sv.probe);
+  session.reportReady=session.threads.every(x=>x.done);
+  initGame();
+  state.candy=sv.candy||0; state.cubesTotal=sv.cubesTotal||0; state.stars=sv.stars||0;
+  /* עמידות לשינוי סדר העולמות (אוג' 2026: לשון הוקדמה לפני קריאה).
+     `stageIdx` הוא מיקום במסלול, ומצב השרשראות נשמר לפי מזהה — כך שאחרי
+     שינוי סדר, אינדקס ישן היה מחזיר ילד לעולם שכבר סיים ומדלג על עולם שלא
+     נבדק. לכן מחפשים את השלב הראשון שהשרשרת שלו טרם הושלמה, ונופלים
+     לאינדקס השמור רק אם אין כזה (מסלול שהסתיים). */
+  const saved=Math.max(0,Math.min(sv.stageIdx||0,session.plan.length-1));
+  const open=session.plan.findIndex(p=>{
+    if(!p.thread) return false;                  // עולם הבונוס אינו נמדד
+    const T=session.byId[p.thread];
+    return T && !T.done;                         // null = אין תוכן בכיתה הזאת
+  });
+  loadWorld(open>=0?open:saved);
+  $("introOv").classList.add("hidden");
+  state.running=true;
+  const p=stageInfo();
+  showToast(p&&p.subjectHe?`ממשיכים ב${p.subjectHe} — ${W.name} ${W.emoji}`:`ממשיכים — ${W.name} ${W.emoji}`,2800);
+}
+function refreshResumeBtn(){
+  const sv=loadProgress(), btn=$("resumeBtn");
+  if(!btn) return;
+  if(!sv){ btn.style.display="none"; return; }
+  btn.style.display="";
+  const sh=sv.subject&&GAME_DATA.subject_he?GAME_DATA.subject_he[sv.subject]+" · ":"";
+  btn.textContent=`▶ להמשיך מעולם ${(sv.stageIdx||0)+1} (${sh}כיתה ${GRADE_HE[sv.grade]})`;
+  btn.onclick=()=>{ ac(); resumeSession(sv); };
+}
+
+/* ---------- מסך הפתיחה: גיל → כיתה → נקודת התחלה ---------- */
+let pickedAge=null, pickedGrade=null;
+$("worldsRow").innerHTML=WORLDS.map((w,i)=>`<span>${w.emoji} ${w.name}</span>`).join("");
+{
+  const pick=$("agePick");
+  for(let a=AGE_MIN;a<=AGE_MAX;a++){
+    const b=document.createElement("button");
+    b.className="gradeBtn"; b.type="button"; b.textContent=a;
+    b.onclick=()=>{
+      pickedAge=a; pickedGrade=gradeFromAge(a);
+      [...pick.children].forEach(c=>c.classList.remove("sel"));
+      b.classList.add("sel");
+      $("gradeSel").value=String(pickedGrade);
+      $("gradeFixRow").classList.remove("on");
+      echoGrade();
+      syncStart();
+    };
+    pick.appendChild(b);
+  }
+  const sel=$("gradeSel");
+  for(let g=1;g<=9;g++){
+    const o=document.createElement("option"); o.value=String(g); o.textContent=GRADE_HE[g];
+    sel.appendChild(o);
+  }
+  sel.onchange=()=>{ pickedGrade=parseInt(sel.value,10); echoGrade(); syncStart(); };
+}
+/* בחירת מקצוע (גרסת «מקצוע אחד» בלבד). אנגלית נלמדת מכיתה ג׳, ולכן בכיתות
+   א׳–ב׳ הכפתור שלה כבוי — בלעדיו הילד/ה היה/תה יוצא/ת למסע של עולם בונוס בלבד. */
+if(SUBJECT_PICK){
+  $("subjPick").classList.remove("hidden");
+  /* רשימת שמונת העולמות מתארת את המסע המלא, ובטלפון היא דוחפת את
+     «יוצאים לדרך» אל מתחת לקצה המסך */
+  $("worldsRow").style.display="none";
+  const box=$("subjBtns");
+  ALL_SUBJECTS.forEach(sub=>{
+    const b=document.createElement("button");
+    b.className="gradeBtn"; b.type="button"; b.dataset.subject=sub;
+    b.textContent=GAME_DATA.subject_he&&GAME_DATA.subject_he[sub]||sub;
+    b.onclick=()=>{ pickedSubject=sub; syncStart(); };
+    box.appendChild(b);
+  });
+}
+function syncStart(){
+  if(SUBJECT_PICK){
+    if(pickedSubject==="english"&&pickedGrade&&pickedGrade<3) pickedSubject=null;
+    [...$("subjBtns").children].forEach(b=>{
+      b.classList.toggle("sel",b.dataset.subject===pickedSubject);
+      b.disabled=b.dataset.subject==="english"&&!!pickedGrade&&pickedGrade<3;
+    });
+  }
+  const st=$("startBtn");
+  if(st) st.disabled=!pickedGrade||(SUBJECT_PICK&&!pickedSubject);
+}
+function echoGrade(){
+  const prev=Math.max(1,pickedGrade-1);
+  /* .flavor נחתך במסך צר — הפעולה («לא בכיתה X?») חייבת להישאר גלויה בטלפון */
+  $("ageEcho").innerHTML=
+    `אתם בכיתה <b>${GRADE_HE[pickedGrade]}</b> — מתחילים בשאלות של כיתה <b>${GRADE_HE[prev]}</b>`+
+    `<span class="flavor">, קצת יותר קלות, וממשיכים לטפס 🚀</span> `+
+    /* אנגלית נלמדת מכיתה ג' — עדיף לומר את זה מראש מאשר להשמיט עולמות בשקט */
+    (pickedGrade<3&&SUBJECT_PICK?`<br><small>אנגלית מתחילה בכיתה ג׳ — `+
+                   `אפשר לבחור עברית או מתמטיקה.</small> `:"")+
+    (pickedGrade<3&&!SUBJECT_PICK?`<br><small>באנגלית עוד לא מתחילים בכיתה ${GRADE_HE[pickedGrade]} — `+
+                   `נשחק בעברית ובמתמטיקה.</small> `:"")+
+    `<button class="linklike" type="button" id="gradeFix">לא בכיתה ${GRADE_HE[pickedGrade]}?</button>`;
+  $("gradeFix").onclick=()=>$("gradeFixRow").classList.add("on");
+}
+/* מחזיר את מסך הפתיחה למצב «עוד לא בחרו גיל» — נדרש במעבר בין אחים:
+   הגיל/הכיתה של הילד/ה הקודם/ת נשארו מסומנים ו«יוצאים לדרך» היה פעיל,
+   ולכן האח השני יצא לדרך עם הכיתה של הראשון. */
+function resetAgePick(){
+  pickedAge=null; pickedGrade=null;
+  const pick=$("agePick");
+  if(pick) [...pick.children].forEach(c=>c.classList.remove("sel"));
+  const echo=$("ageEcho");
+  if(echo) echo.textContent="בחרו גיל — ונתאים לכם את השאלות 🎯";
+  const fix=$("gradeFixRow"); if(fix) fix.classList.remove("on");
+  pickedSubject=null;
+  syncStart();
+}
+$("startBtn").onclick=()=>{
+  if(!pickedGrade) return;
+  if(SUBJECT_PICK&&!pickedSubject) return;
+  /* משחק חדש = שורת הרצה חדשה בענן. בלי האיפוס הזה, אח שני שהתחיל משחק
+     דרס את ה-state של ההרצה של הראשון (authRunId נשאר מהמפגש הקודם). */
+  ac(); clearProgress(); authRunId=null;
+  newSession(pickedGrade,SUBJECT_PICK?pickedSubject:null);
+  initGame();
+  $("introOv").classList.add("hidden");
+  state.running=true;
+  const T=session.threads[0];
+  if(T) showToast(`מתחילים ב${T.cfg.name} — ${curStation(T).tag} 🎯`,2600);
+};
+
+/* ---------- דוח המיפוי ---------- */
+const STATUS_HE={advanced:"שליטה מתקדמת",core:"שליטה בליבה",basic:"שליטה בסיסית",
+                 below_basic:"עדיין לא בבסיס",not_assessed:"לא נבדק"};
+$("repClose").onclick=()=>{ $("repOv").classList.add("hidden"); };
+/* «הדוחות שלי» — הדרך היחידה שדוח מגיע למישהו עכשיו (החלטת שני, אוג' 2026):
+   רק ההורה, רק אחרי כניסה, ולא הילד ולא ברגע הסיום. שולף מ-reports דרך
+   ה-policy reports_parent_read (parent_id=auth.uid() — ראו schema.sql §4).
+   v1: מציג את הדוח **האחרון** בלבד — משפחה עם כמה הרצות/ילדים היא הרחבה
+   עתידית, לא נבנתה כאן. */
+async function showMyReports(){
+  if(!sb||!authUser) return;
+  try{
+    const studentId=await authEnsureStudent();
+    let q=sb.from("reports").select("report").eq("parent_id",authUser.id);
+    if(studentId) q=q.eq("student_id",studentId);   // הדוח של מי שמשחק/ת עכשיו, לא של האח/ות
+    const {data,error}=await q.order("created_at",{ascending:false}).limit(1);
+    if(error) throw error;
+    if(!data||!data.length){
+      showToast((authStudentName?"עדיין אין דוח שמור ל"+authStudentName:"עדיין אין דוח שמור")+
+                " — צריך לסיים מיפוי קודם 🗺️",3000); return; }
+    showReport(data[0].report);
+  }catch(e){ showToast("לא הצלחנו לטעון את הדוח — לנסות שוב עוד רגע",3000); }
+}
+/* showReport(rep): מציג דוח. בלי ארגומנט — בונה מה-session החי (נשאר לצורך
+   תאימות, למשל טסטים שקוראים לה ישירות). עם ארגומנט — מציג דוח **שמור**
+   שנשלף מ-Supabase (showMyReports), הרבה אחרי שה-session המקורי נעלם.
+   בגלל זה כל מה שהפונקציה קוראת חייב לבוא מ-rep עצמו, לא מ-session/T
+   החיים — ראו ההערה ב-buildReport() על emoji/above_ceiling. */
+function showReport(repArg){
+  const rep=repArg||buildReport();
+  const mm=Math.floor(rep.total_seconds/60), ss=rep.total_seconds%60;
+  $("repSub").innerHTML=`כיתה <b>${GRADE_HE[rep.student.grade]}</b> · ${rep.questions_asked} שאלות · `+
+    `${mm}:${String(ss).padStart(2,"0")} דקות · ⭐ ${rep.stars.collected}/${rep.stars.of}`;
+  const cardOf=k=>{
+    const nodes=k.topics.slice().reverse().map(n=>
+      `<div class="repNode ${n.status}"><span class="dot"></span>`+
+      `<span>${n.tag} · ${n.label}</span>`+
+      `<span class="st">${STATUS_HE[n.status]}</span>`+
+      `<span class="inf">${n.measured?"נמדד":"הוסק"}</span></div>`).join("");
+    /* שרשרת שלא נמדדה בה אף מדרגה (למשל: נגמרו השאלות במאגר) — «לא נבדק»
+       ולא ציון 0, שנקרא כאילו התלמיד נכשל בכול. */
+    const measured=k.assessed;
+    /* אין ציון מספרי בכרטיס (החלטת שני, אוג' 2026, מוחמר עכשיו לכל הדוח —
+       הילד לא רואה את המסך הזה בכלל יותר, רק ההורה מתוך «הדוחות שלי»).
+       הציון מנורמל לתקרת הכיתה, ולכן `k.score` לא מוצג כאן, רק בקובץ
+       המיוצא ל-reports (לצורך שיבוץ אדמין) — ראו PROJECT-OVERVIEW §6.6. */
+    const score=measured?"":`<span class="repScore" style="font-size:15px;color:#8A98A6;">לא נבדק</span>`;
+    /* עבר את שאלת הבונוס מעל תקרת כיתתו — ניסוח זהיר בכוונה: «יש שם עוד»,
+       לא «אתה ברמת כיתה X» — תצפית אחת. */
+    const bonus=k.above_ceiling
+      ? `<div class="repNode advanced"><span class="dot"></span>`+
+        `<span>⭐ ענה/תה נכון גם על שאלת הבונוס — מעל מה שנלמד בכיתה!</span></div>` : "";
+    return `<div class="repThread"><div class="repHead"><b>${k.emoji||""} ${k.name}</b>`+
+           `${score}</div>${measured?bonus+nodes:'<div style="font-size:13px;color:#5A6B7C;">לא הספקנו לבדוק את הנושא הזה במפגש.</div>'}</div>`;
+  };
+  /* מקובץ לפי מקצוע, בסדר המשחק: עברית → מתמטיקה → אנגלית */
+  const SUBJ_ORDER=rep.subject_scope||ALL_SUBJECTS;
+  const SUBJ_NAME={hebrew:"עברית",math:"מתמטיקה",english:"אנגלית"};
+  const threads=SUBJ_ORDER.map(sub=>{
+    const list=rep.knowledge_state.filter(k=>k.subject===sub);
+    if(!list.length){
+      /* מקצוע שלא נבדק כלל — נאמר את זה מפורשות ולא נשמיט אותו מהדוח */
+      return `<div class="repSubj">${SUBJ_EMOJI[sub]} ${SUBJ_NAME[sub]}</div>`+
+             `<div class="repThread" style="border-style:dashed;">`+
+             `<div style="font-size:13.5px;color:#5A6B7C;">`+
+             (sub==="english"?"אנגלית נלמדת מכיתה ג׳ — לא נבדקה במפגש הזה."
+                             :"לא נבדק במפגש הזה.")+`</div></div>`;
+    }
+    return `<div class="repSubj">${SUBJ_EMOJI[sub]} ${SUBJ_NAME[sub]}</div>`+list.map(cardOf).join("");
+  }).join("");
+  const mis=rep.diagnosed_misconceptions.length
+    ? rep.diagnosed_misconceptions.map(d=>
+        `<div class="repMis"><b>${d.thread} · ${d.skill||""}</b>${d.diagnosis}`+
+        `${d.tags&&d.tags.length?` · <span style="font-size:12px;">${d.tags.join(", ")}</span>`:""}</div>`).join("")
+    : `<p style="font-size:14px;color:#5A6B7C;">לא אובחנו שגיאות תפיסתיות ספציפיות.</p>`;
+  const P=rep.probe;
+  const probeCard=!P?"":`<div class="repThread" style="border-style:dashed;">
+      <div class="repHead"><b>${P.emoji||""} ${P.name}</b>
+        <span style="font-size:13px;color:#5A6B7C;">בדיקה קצרה · ${P.questions_asked} שאלות</span></div>
+      <div class="repNode ${P.questions_asked===0?"not_assessed":P.passed?"core":"below_basic"}">
+        <span class="dot"></span>
+        <span>${P.questions_asked===0?"לא נבדק במפגש הזה"
+          :P.passed?`עמד בשאלת ליבה של ${P.checked_tag||("כיתה "+GRADE_HE[P.checked_grade])}`
+          :`לא עמד בשאלות של ${P.checked_tag||("כיתה "+GRADE_HE[P.checked_grade])} — כדאי לבדוק לעומק`}</span>
+        <span class="st">${P.correct}/${P.questions_asked||0} נכונות</span></div>
+      <div style="font-size:12.5px;color:#5A6B7C;">נושא שאינו ליבה — נבדק כהצצה בלבד, לא כמיפוי מלא.</div>
+    </div>`;
+  $("repBody").innerHTML=threads+probeCard+
+    `<div style="font-weight:800;margin-top:6px;">שגיאות תפיסתיות שאובחנו</div>`+mis;
+  $("repDl").onclick=()=>{
+    const blob=new Blob([JSON.stringify(rep,null,2)],{type:"application/json"});
+    const a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+    a.download=`knowledge_map_grade${rep.student.grade}.json`; a.click();
+  };
+  $("repOv").classList.remove("hidden");
+}
+
+/* =========================================================================
+   שער השאלות — כל נגיעה בקובייה עוברת כאן.
+   עיקרון «כישלון רך»: הקובייה תמיד נאספת בסוף. תשובה נכונה פותחת אותה
+   מייד; תשובה שגויה מגלגלת לשאלה קלה יותר (המנוע יורד מדרגה) עד הצלחה
+   או עד שנמצא גבול הידע — ואז הקובייה ניתנת ממילא. הילד לא נתקע לעולם,
+   והמיפוי נשמר במלואו מאחורי הקלעים.
+   ========================================================================= */
+const qUI={open:false, mode:"thread", T:null, q:null, grant:null, deny:null, cube:null,
+           atBridge:false, qStart:0};
+
+/* פריסת השאלות על פני העולם: שתי הקוביות הראשונות הן חימום — נאספות
+   חופשי כדי שהילד ילמד את המכניקה (ובעולם הראשון אף יבנה גשר) לפני
+   השאלה הראשונה. מהקובייה השלישית ואילך שואלים בכל קובייה שנייה, כך
+   שהמיפוי מתפרס על כל המסלול ולא נדחס להתחלה. ברבע האחרון של העולם
+   שואלים בכל קובייה — רשת ביטחון למקרה שהשרשרת עדיין לא הגיעה לגבול. */
+const WARMUP_CUBES=2;
+/* המרווח נגזר מגודל העולם: ~5 נקודות שאלה פרוסות לאורכו (בעולם גדול
+   הפער גדול יותר) — מיפוי טיפוסי צורך 5–8 שאלות, וקובייה יכולה לשאת שתיים. */
+const questionStep=()=>Math.max(2,Math.floor((cubes.length-WARMUP_CUBES)/5));
+function isQuestionCube(c){
+  if(!c||c.idx==null) return true;
+  if(c.idx<WARMUP_CUBES) return false;
+  return (c.idx-WARMUP_CUBES)%questionStep()===0 || c.idx>=cubes.length-3;
+}
+
+function questionGate(cube, grant, deny){
+  if(qUI.open||!session) { if(!session) grant(); return; }
+  if(!isQuestionCube(cube)){ grant(); return; }    // קובייה חופשית לפי הפריסה
+  if(probeDue()){                                  // בדיקה קצרה (גאומטריה)
+    const P=session.probe, pool=probePool();
+    openQuestion("probe",pool[Math.floor(Math.random()*pool.length)],null,cube,grant,deny);
+    P.lastAt=session.asked;
+    return;
+  }
+  let T=activeThread();
+  /* בעולם הבונוס אין שרשרת משלו; אם נשארה שרשרת פתוחה — היא ממשיכה כאן. */
+  if(!T){ const o=ownThread(); if(o&&!o.done) T=o; }
+  if(!T){
+    /* השרשרת מופתה — במקום קובייה חופשית, שאלת פרופיל אם נשארה כזו. */
+    const own=ownThread(), pf=own?profileQuestion(own):null;
+    /* **הסדר קריטי**: openQuestion קורא ל-renderQuestion, שכבר קורא את
+       qUI.pfStation. אם הוא נקבע אחר כך, התווית מציגה את התחנה של העולם
+       הקודם — «כיתה ה׳» לילד/ה שנמצא/ת בכיתה ב׳. */
+    if(pf){ qUI.pfStation=pf.station; openQuestion("profile",pf.q,own,cube,grant,deny); return; }
+    grant(); return;
+  }
+  const q=pickQuestion(T);
+  /* אזל המאגר — השרשרת נסגרת בלי שנמצא גבול ידע. זה **לא** ממצא על התלמיד,
+     ולכן נרשם כסיבת סיום נפרדת ומוריד את דרגת הוודאות. */
+  if(!q){ finishThread(T,"bank_exhausted"); grant(); return; }
+  openQuestion("thread",q,T,cube,grant,deny);
+}
+
+function openQuestion(mode,q,T,cube,grant,deny){
+  qUI.open=true; qUI.mode=mode; qUI.T=T; qUI.cube=cube; qUI.grant=grant; qUI.deny=deny;
+  qUI.atBridge=!!(cube&&cube.bridge);
+  state.running=false;
+  $("qOv").classList.remove("hidden");
+  const qPanel=$("qOv").querySelector(".panel");
+  qPanel.scrollTop=0;                              // כרטיס גלול מהשאלה הקודמת
+  /* אם הצגת השאלה נכשלת, הילד נשאר מול חלונית ריקה בלי כפתורים והמשחק עצור
+     לנצח — בדיוק «הדמות נתקעה». נכשלים לטובת הילד: סוגרים, נותנים את
+     הקובייה, וממשיכים. שאלה שלא הוצגה אינה ראיה על שום דבר. */
+  try{
+    renderQuestion(q);
+  }catch(err){
+    console.error("[cq] renderQuestion",err);
+    qUI.open=false;
+    $("qOv").classList.add("hidden");
+    $("qFb").innerHTML="";
+    const g=qUI.grant;
+    qUI.T=null; qUI.q=null; qUI.grant=null; qUI.deny=null; qUI.cube=null; qUI.atBridge=false;
+    clearKeys();
+    try{ if(g) g(); }catch(e){}
+    if(!state.flagHit) state.running=true;
+    showToast("השאלה הזאת לא נטענה — הקובייה שלכם בכל מקרה 🧊",2600);
+  }
+}
+
+/* הגעה לגשר בלי מספיק קוביות — הבחירה בידי הילד: לחזור ולאסוף מהדרך, או
+   לענות כאן על שאלה ולקבל קובייה. השאלה אף פעם לא נכפית. */
+let brBridge=null;
+function bridgeChoice(b){
+  if(qUI.open||brBridge) return;
+  brBridge=b; state.running=false;
+  const miss=b.need-state.cubes;
+  $("brText").innerHTML=
+    `הגשר צריך <b>${b.need}</b> קוביות, ויש לכם <b>${state.cubes}</b>.<br>`+
+    `אפשר לחזור אחורה ולאסוף עוד ${miss===1?"קובייה אחת":`${miss} קוביות`} מהדרך — `+
+    `או לענות כאן על שאלה, וקובייה חדשה תיווצר על המקום. ✨`;
+  $("brOv").classList.remove("hidden");
+}
+function closeBridgeChoice(){
+  $("brOv").classList.add("hidden");
+  const b=brBridge; brBridge=null; return b;
+}
+$("brAsk").onclick=()=>{
+  const b=closeBridgeChoice(); if(!b) return;
+  b.mode="question";                                // בחרו לענות — לא נשאל שוב עד שמתרחקים
+  try{ bridgeQuestion(b); }catch(e){ console.error("[cq] bridgeQuestion",e); }
+  if(!qUI.open&&!state.flagHit) state.running=true;  // הקובייה ניתנה בלי שאלה — ממשיכים
+};
+$("brBack").onclick=()=>{
+  const b=closeBridgeChoice(); if(!b) return;
+  b.hold=true;
+  if(!state.flagHit) state.running=true;
+  showToast("אין בעיה — הקוביות מחכות לכם בדרך 🧊",2600);
+};
+
+/* השלמת קובייה בגשר: מי שדילג על קוביות השאלה ומגיע לגשר בלי מספיק קוביות
+   משלים אותן כאן. זה גם סוגר את הפרצה («לאסוף רק ✦ ולעבור») וגם הופך את
+   השאלה לרגע בעל תכלית — הגשר ממש מחכה לקובייה הזאת. */
+function bridgeQuestion(b){
+  questionGate({idx:null,bridge:true},
+    ()=>{
+      state.cubes++; state.cubesTotal++; syncHud(); sfx.cube();
+      spawnBurst(b.x0-30,GY-70,["#7C5CFF","#B9A6FF","#FFFFFF","#FFD166"],20,320);
+      floaters.push({x:b.x0-30,y:GY-90,text:"🧊 +1",t:0});
+      const miss=b.need-state.cubes;
+      b.coolT=state.time+1.2;                        // רגע נשימה לפני השאלה הבאה
+      showToast(miss>0?`קובייה חדשה! עוד ${miss} לגשר 🧊`:"קובייה חדשה — הגשר יכול להיבנות! 🎉",2200);
+    },
+    ()=>{ b.hold=true; showToast("ננסה שוב — התרחקו רגע וחזרו לגשר 💪",2600); });
+}
+
+/* «יש עוד למטה» — רק כשיש באמת מה לגלול ורק עד שהגיעו לתחתית. */
+function syncScrollCue(){
+  const p=$("qOv").querySelector(".panel");
+  p.classList.toggle("more", p.scrollHeight-p.clientHeight-p.scrollTop>2);
+}
+
+/* אי נוסחה רחב מהכרטיס. נוסחה **אסור** לה להישבר בין שתי שורות (זה הכלל
+   שמגן על `−4x < 12` מלהתפרק), ולכן ריצה ארוכה — רשימת נקודות, שרשרת נתוני
+   חפיפה — גלשה מהכרטיס ונחתכה בטלפון. הפתרון היחיד שאינו נוגע ב-fmtMath ואינו
+   נוגע בסדר התווים: מקטינים את האי עד שהוא נכנס. נוסחה קטנה יותר עדיפה על
+   נוסחה חתוכה, ואיי טקסט (class="txt") לא נוגעים — הם נשברים לשורות בעצמם. */
+function fitFormulas(){
+  const shrink=(b,avail)=>{
+    b.style.fontSize="";
+    if(!(avail>0)) return;
+    const w=b.getBoundingClientRect().width;
+    if(w>avail+0.5&&w>0) b.style.fontSize=Math.max(62,Math.floor(avail/w*100))+"%";
+  };
+  const inner=el=>{ const c=getComputedStyle(el);
+    return el.clientWidth-parseFloat(c.paddingLeft||0)-parseFloat(c.paddingRight||0); };
+  for(const id of ["qStem","qFb"]){
+    const el=$(id); if(!el) continue;
+    const avail=inner(el);
+    el.querySelectorAll("bdi:not(.txt)").forEach(b=>shrink(b,avail));
+  }
+  $("qBody").querySelectorAll(".qopt").forEach(btn=>{
+    const key=btn.querySelector(".key");
+    const avail=inner(btn)-(key?key.getBoundingClientRect().width:0)-12;
+    btn.querySelectorAll("bdi:not(.txt)").forEach(b=>shrink(b,avail));
+  });
+}
+$("qOv").querySelector(".panel").addEventListener("scroll",syncScrollCue,{passive:true});
+window.addEventListener("resize",()=>{ if(qUI.open){ fitFormulas(); syncScrollCue(); } });
+
+function closeQuestion(granted){
+  qUI.open=false;
+  $("qOv").classList.add("hidden");
+  $("qFb").innerHTML="";
+  /* grant/deny נכתבו במקומות רבים. חריגה באחד מהם השאירה את המשחק עצור
+     לנצח — החלונית כבר נסגרה, הילד רואה מסך תקין ודמות שאינה זזה. */
+  try{
+    if(granted){ if(qUI.grant) qUI.grant(); }
+    else if(qUI.deny) qUI.deny();
+  }catch(e){ console.error("[cq] closeQuestion",e); }
+  qUI.T=null; qUI.q=null; qUI.grant=null; qUI.deny=null; qUI.cube=null; qUI.atBridge=false;
+  clearKeys();                       // הילד ענה בעכבר/מגע — מקש שנשאר לחוץ מזנק אותו קדימה
+  if(!state.flagHit) state.running=true;
+}
+
+/* שאלות אנגלית מוצגות כאי LTR שלם: הטקסט אנגלי, אבל המסגרת עברית RTL —
+   בלי הבידוד הזה סימני פיסוק וגרשיים קופצים לצד הלא נכון של המשפט.
+   שאר המקצועות עוברים דרך fmtMath (ראו האזהרה למעלה — אין לגעת בו). */
+const escHtml=t=>String(t==null?"":t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const isEnglishQ=q=>!!q&&/^ENG-/.test(q.topic_id||"");
+/* class="txt" = אי טקסט ולא נוסחה, ולכן מותר לו להישבר לשורות (ראו ה-CSS). */
+const fmtQ=(en,t)=>en?'<bdi dir="ltr" class="txt">'+escHtml(t)+'</bdi>':fmtMath(t);
+/* גזע של שאלת אנגלית. גזע שכולו אנגלית (A2 ומעלה) — אי LTR אחד.
+   גזע מעורב (Pre-A1/A1: הוראה בעברית, הפריט הנבדק באנגלית) — כל ריצה
+   אנגלית מבודדת בנפרד, והמשפט נשאר בזרימת RTL. נמדד: בלי זה 5 מתוך 6
+   גזעים מעורבים הוצגו בסדר הפוך, והילד פגש את המילה האנגלית ראשונה.
+   ה-`_` בתחילת המחלקה קריטי — בלעדיו «___ you like» מנתק את הקו החסר
+   ומציב אותו בצד השני של המשפט. לא להעביר גזע אנגלי דרך fmtMath:
+   הוא מפצל על הגרש ו-"Ben's" נשבר לשני איים. */
+const fmtEnStem=t=>{
+  const s=escHtml(String(t==null?"":t));
+  if(!/[֐-׿]/.test(s)) return '<bdi dir="ltr" class="txt">'+s+'</bdi>';
+  return s.replace(/[A-Za-z\/_][A-Za-z0-9 ,.'’!?:;()\/_—–-]*[A-Za-z0-9._'’!?)\/]|[A-Za-z]/g,
+                   m=>'<bdi dir="ltr" class="txt">'+m+'</bdi>');
+};
+
+function renderQuestion(q){
+  const T=qUI.T; qUI.q=q; qUI.qStart=Date.now();
+  const LEVEL_HE={1:"כניסה",2:"ליבה",3:"אתגר"};
+  const P=session.probe;
+  const cfg=qUI.mode==="probe"?P.cfg:T.cfg;
+  /* בשאלת פרופיל התחנה אינה T.idx (הסולם כבר נסגר) אלא זו שממנה נשלפה. */
+  const node=qUI.mode==="profile"?T.st[qUI.pfStation]:curStation(T);
+  const L=q.level||2;
+  const en=isEnglishQ(q);
+  $("qOv").querySelector(".panel").classList.toggle("en",en);
+  /* שאלת אתגר מסומנת כבונוס ומוותרת על תווית המדרגה: אין טעם לומר לילד
+     כיתה ה׳ «כיתה ו׳» באמצע המשחק, והסימון מבהיר שאין מה להפסיד. */
+  /* «שאלת בונוס» רק כשזו באמת שאלת האתגר. קודם התנאי היה «לא probe», ולכן
+     כל שאלות הפרופיל של מקצוע שהגיע לתקרה נצבעו כבונוס — והרמה שעליה הן
+     נשענות לא הוצגה כלל (משוב משחק, שני). */
+  const chal=qUI.mode==="thread"&&T.challenge;
+  /* התווית נעלמת רק כשהילד/ה נמצא/ת שתי כיתות או יותר מתחת לכיתתו/ה:
+     «כיתה א׳» על המסך של ילד בכיתה ה׳ אינו מידע אלא עקיצה. שלוש ולא
+     שתיים: כיתה אחת-שתיים מתחת עדיין נקראת כמשוב, לא כשיפוט. */
+  const deep=!!node&&!!session&&(session.grade-node.grade_to)>=3;
+  $("qChips").innerHTML=
+    `<span class="qchip accent">🧊 ${cfg.emoji||""} ${cfg.name}</span>`+
+    (chal?`<span class="qchip">⭐ שאלת בונוס</span>`
+         :(deep||!node)?""
+         :`<span class="qchip">${node.tag}</span>`)+
+    (qUI.mode==="probe"?`<span class="qchip">הצצה קטנה 👀</span>`:"")+
+    (qUI.atBridge?`<span class="qchip">🌉 קובייה לגשר</span>`:"");
+  /* תרגיל במאונך: המאגר נושא שלוש שורות מוכנות (a / b / קו), והן מצוירות
+     בבלוק LTR ברוחב תו קבוע ולא כגזע בשורה אחת. זה מה שהילד/ה כותב/ת
+     במחברת, וזו הייתה בקשה מפורשת. `white-space:pre` שומר על היישור. */
+  if(q.vertical){
+    const v=q.vertical;
+    $("qStem").innerHTML='<span class="qask">חשבו:</span>'+
+      '<span class="vert">'+[v.a,v.b,v.rule].map(escHtml).join("\n")+'</span>';
+  } else
+  $("qStem").innerHTML=en?fmtEnStem(q.stem):fmtMath(q.stem);
+  /* אותו תנאי בדיוק שבו fmtEnStem מחזיר אי אחד: אין ולו אות עברית אחת. */
+  $("qStem").classList.toggle("ltr",en&&!/[֐-׿]/.test(q.stem||""));
+  $("qFb").innerHTML="";
+  const body=$("qBody"); body.innerHTML="";
+  if(q.qtype==="mc"){
+    const wrap=document.createElement("div"); wrap.className="qopts";
+    const order=shuffleOptions(q); qUI.order=order;
+    order.forEach((o,i)=>{
+      const b=document.createElement("button"); b.className="qopt"; b.type="button";
+      /* התווית מוצגת לפי מקום התצוגה, לא לפי o.key — הנכונות נקבעת ב-answerMC
+         לפי המפתח המקורי, כדי שהערבוב לא ישבור את ההתאמה. */
+      b.innerHTML=`<span class="key">${"abcd"[i]})</span><span>${fmtQ(en,o.text)}</span>`;
+      b.onclick=()=>answerMC(q,o,wrap,order);
+      wrap.appendChild(b);
+    });
+    body.appendChild(wrap);
+    const first=wrap.querySelector("button");
+    if(first) first.focus({preventScroll:true});
+  }else{
+    body.innerHTML=`<div class="qnumrow"><input id="qNum" inputmode="numeric" autocomplete="off" placeholder="התשובה שלי">`+
+                   `<button class="qbtn" id="qGo" type="button">בדיקה</button></div>`;
+    const go=()=>{const v=$("qNum").value; if(v.trim()!=="") answerNumeric(q,v);};
+    $("qGo").onclick=go;
+    $("qNum").addEventListener("keydown",e=>{ if(e.key==="Enter") go(); });
+    $("qNum").focus({preventScroll:true});
+  }
+  /* «עוד לא למדתי» — עדיף על ניחוש: אותה השפעה על המנוע, בלי אבחנה שגויה
+     בפרופיל ובלי תחושת כישלון (סביבה ביתית ללא משגיח). */
+  const skip=document.createElement("button");
+  skip.type="button"; skip.className="linklike";
+  skip.style.cssText="align-self:flex-start;margin-top:6px;font-size:14.5px;";
+  skip.textContent="עוד לא למדתי את זה 🤷";
+  skip.onclick=()=>{
+    body.querySelectorAll("button,input").forEach(b=>b.disabled=true);
+    finishAnswer(q,false,"(דילוג)",null,true);
+  };
+  body.appendChild(skip);
+  fitFormulas();
+  $("qOv").querySelector(".panel").scrollTop=0;   // תמיד מתחילים מראש השאלה
+  syncScrollCue();
+}
+
+function answerMC(q,opt,wrap,order){
+  /* הסימון נעשה לפי מקום התצוגה (order), לא לפי תווית האות — האותיות מוקצות
+     מחדש אחרי הערבוב, ורק q.answer מול o.key קובע נכונות. */
+  const ok=opt.key===q.answer;
+  [...wrap.children].forEach((b,i)=>{
+    b.disabled=true;
+    const o=(order||q.options)[i];
+    if(o&&o.key===q.answer) b.classList.add("correct");
+    if(o===opt&&!ok) b.classList.add("wrong");
+  });
+  finishAnswer(q,ok,opt.text,ok?null:opt.diagnosis);
+}
+function answerNumeric(q,val){
+  const norm=s=>String(s).replace(/[,\s]/g,"").replace(/[־–—]/g,"-").trim();
+  $("qNum").disabled=true; $("qGo").disabled=true;
+  finishAnswer(q,norm(val)===norm(q.answer),val,null);
+}
+
+/* רישום התשובה + מעבר המנוע, ואז המשך המסע של אותה קובייה */
+function finishAnswer(q,correct,given,diagnosis,skipped){
+  const T=qUI.T, probe=qUI.mode==="probe", P=session.probe;
+  session.used.add(q.question_id); session.asked++;
+  if(probe){
+    P.asked++; if(correct) P.correct++;
+    P.items.push({question_id:q.question_id, topic_id:q.topic_id,
+      grade:P.nodes[P.idx].grade, level:P.level, correct});
+  }else if(qUI.mode==="profile"){
+    const w=state.stageIdx||0;
+    T.pfByWorld=T.pfByWorld||{}; T.pfByWorld[w]=(T.pfByWorld[w]||0)+1;
+  }
+  else{ T.asked++; }
+  const opts=q.options||[];
+  const textOf=k=>{const o=opts.find(x=>x.key===k);return o?o.text:(k==null?"":String(k));};
+  const node=qUI.mode==="profile"?T.st[qUI.pfStation]:curStation(T);
+  session.answers.push({question_id:q.question_id, mode:probe?"probe":"thread",
+    thread:probe?P.cfg.id:T.cfg.id, topic_id:q.topic_id,
+    grade:node?node.grade_to:null, tag:node?node.tag:null,
+    level:q.level||2, profile:qUI.mode==="profile",
+    station:qUI.mode==="profile"?null:T.idx, level_id:node?node.level_id:null,
+    slot:q.slot!=null?q.slot:null, focus_he:q.focus_he||null,
+    correct, given, skipped:!!skipped, seconds:Math.round((Date.now()-qUI.qStart)/1000),
+    /* ראיות שהיו חסרות ובלעדיהן אי אפשר לשקול את המסקנה:
+       second_try — ענה נכון רק בניסיון השני (ידע חלקי, לא זהה לידע מלא)
+       pool_left  — כמה שאלות נותרו במדרגה; 0 אומר שלא היה ממה לשאול שוב
+       at_bridge  — נשאלה ליד הגשר, כשהילד בחר לענות כדי לקבל קובייה */
+    second_try:probe?false:!!T.secondTry,
+    pool_left:stationPool(T,curStation(T)).length,
+    at_bridge:!!qUI.atBridge,
+    challenge:probe?false:!!T.challenge,   // בונוס מעל התקרה — מחוץ למדידה
+    /* תחום הליבה של השאלה — הציר שדוח המלווה מדבר בו («כפל וחילוק»,
+       «שברים»). מוזרק ע"י build_game.py כדי שהקובץ ייקרא בלי המאגר. */
+    area:q.area||null, area_he:q.area_he||null,
+    /* הקובץ צריך להיקרא בלי המאגר לצידו */
+    stem:q.stem, given_text:skipped?"":textOf(given), answer_text:textOf(q.answer)});
+  if(!correct&&diagnosis)
+    session.diagnoses.push({thread:probe?P.cfg.name:T.cfg.name, question_id:q.question_id, skill:q.skill,
+      diagnosis, tags:q.misconceptions||[]});
+  if(correct){ sfx.cube(); } else { tone(300,0.18,"sine",0.07,220); }
+
+  const fb=$("qFb");
+  if(correct){
+    fb.innerHTML=`<div class="qfb ok"><span>🎉 נכון! ${qUI.atBridge?"נוצרה קובייה לגשר.":"הקובייה שלכם."}</span>
+      <button class="qbtn" id="qCont" type="button">קדימה!</button></div>`;
+  }else{
+    fb.innerHTML=`<div class="qfb bad">
+      <span>${skipped?"אין בעיה — ככה זה עובד:":"כמעט!"} ${fmtQ(isEnglishQ(q),q.solution||"")}</span>
+      <span style="font-weight:600;">ננסה קובייה אחרת — קצת אחרת 💪</span>
+      <button class="qbtn" id="qCont" type="button">המשך</button></div>`;
+  }
+  $("qCont").onclick=()=>advance(correct);
+  $("qCont").focus();
+  fitFormulas();
+  syncScrollCue();
+}
+
+/* מעבר המדרגה. לכל היותר שתי שאלות במפגש אחד עם קובייה (הניסיון השני של
+   המנוע באותה מדרגה) — כדי שהמשחק לא ייהפך לחקירה. אחרי שתי שגיאות
+   הקובייה פשוט נשארת במקומה: המנוע יורד מדרגה, ובנגיעה הבאה בקובייה
+   מחכה שאלה קלה יותר. שום דבר לא "אבד" — זה מה שהופך את הכישלון לרך. */
+function advance(correct){
+  const T=qUI.T;
+  if(qUI.mode==="profile"){                          // שאלת פרופיל — לא משנה רמה
+    closeQuestion(true);
+    return;
+  }
+  if(qUI.mode==="probe"){                           // בדיקה קצרה: 1–2 שאלות, אף פעם לא חוסמת
+    const P=session.probe;
+    if(correct){ P.done=true; P.passed=true; }
+    else if(P.asked>=2||P.idx===0){ P.done=true; P.passed=false; }
+    else{ P.idx--; }                                // שאלה שנייה — כיתה אחת נמוך יותר
+    closeQuestion(true);
+    return;
+  }
+  if(correct){
+    /* שאלת הבונוס מוכרעת בתשובה **אחת** ולא בשלוש — היא מסמנת «מעל התקרה»
+       ואינה מדידה. בלי היציאה המוקדמת היא נשאלה שלוש פעמים ברצף. */
+    if(T.challenge){ threadPass(T); closeQuestion(true); return; }
+    T.good++;
+    if(T.good>=GOOD_TO_PASS) threadPass(T);         // 3 נכונות → עולים כיתה
+    closeQuestion(true);                            // תשובה נכונה → הקובייה נאספת
+    return;
+  }
+  /* כישלון בשאלת האתגר אינו ירידה — הוא רק אומר שהגבול נמצא בתוך הכיתה.
+     לא נרשם ב-failed, אין ניסיון שני, והקובייה ניתנת בכל מקרה. */
+  if(T.challenge){
+    finishThread(T,"ceiling");
+    closeQuestion(true);
+    showToast("שאלת בונוס — אין בעיה. סיימנו למפות את העולם הזה 🎁",2600);
+    return;
+  }
+  /* טעות ראשונה בתחנה — שאלה נוספת מאותה כיתה, לא יורדים.
+     טעות שנייה — יורדים. זה כלל 3/2 שהוחלט אחרי הסימולציה. */
+  T.bad++;
+  /* ממשיכים באותה תחנה כל עוד לא הצטברו 2 טעויות **וגם** לא נשאלו 3 שאלות. */
+  if((T.bad<BAD_TO_DROP||(T.good+T.bad)<MIN_AT_STATION)&&stationPool(T,curStation(T)).length){
+    renderQuestion(pickQuestion(T));
+    return;
+  }
+  threadFail(T);
+  if(T.done){                                       // נמצא גבול הידע — הקובייה במתנה
+    closeQuestion(true);
+    showToast("סיימנו למפות את העולם הזה — הקובייה שלכם 🎁",2600);
+    return;
+  }
+  closeQuestion(false);
+  showToast("הקובייה מחכה לכם — בנגיעה הבאה תהיה שאלה קלה יותר 💪",2800);
+}
+
+/* ---------- helpers ---------- */
+function overlap(ax,ay,aw,ah,r){ return ax<r.x+r.w && ax+aw>r.x && ay<r.y+r.h && ay+ah>r.y; }
+function solids(){
+  const s=[];
+  for(const [x0,x1] of W.segs) s.push({x:x0,y:GY,w:x1-x0,h:H-GY+60});
+  for(const b of bridges){
+    if(b.built) s.push({x:b.x0,y:GY,w:b.x1-b.x0,h:H-GY+60});
+    else s.push({x:b.x0-10,y:GY-180,w:12,h:180});          // שער חסימה עד שהגשר נבנה
+  }
+  s.push({x:W.x0-40,y:0,w:44,h:GY});                        // קירות קצה
+  s.push({x:W.x1-4,y:0,w:44,h:GY});
+  return s;
+}
+function spawnBurst(x,y,cols,n,pow){
+  for(let i=0;i<(n||14);i++){
+    const a=Math.random()*Math.PI*2, v=(0.4+Math.random()*0.6)*(pow||260);
+    particles.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v-120,life:0.5+Math.random()*0.5,
+      t:0,col:cols[Math.floor(Math.random()*cols.length)],size:2.5+Math.random()*3.5,grav:600});
+  }
+}
+function easeOutBounce(t){
+  const n1=7.5625,d1=2.75;
+  if(t<1/d1) return n1*t*t;
+  if(t<2/d1) return n1*(t-=1.5/d1)*t+0.75;
+  if(t<2.5/d1) return n1*(t-=2.25/d1)*t+0.9375;
+  return n1*(t-=2.625/d1)*t+0.984375;
+}
+function buildDur(b){ return b.planks*0.22+0.35; }
+
+/* ---------- gameplay ---------- */
+function collectCube(c){
+  c.taken=true; state.cubes++; state.cubesTotal++;
+  sfx.cube(); syncHud();
+  spawnBurst(c.x,c.y,["#7C5CFF","#B9A6FF","#FFFFFF","#FFD166"],18,300);
+  floaters.push({x:c.x,y:c.y-20,text:"🧊 +1",t:0});
+  showToast("אספתם קוביית קסם! ✨",1600);
+}
+function respawn(splash){
+  if(splash){ sfx.splash(); spawnBurst(player.x+PW/2,WY,["#8ED4F5","#CFEFFC","#FFFFFF"],22,320); }
+  player.x=player.checkX; player.y=GY-PH; player.vx=0; player.vy=0;
+  if(splash) showToast("אופס, למים! חוזרים לנקודת הביניים 💧",2000);
+}
+function startBuild(b){
+  b.building=true; b.t=0; state.cubes-=b.need; syncHud();
+  spawnBurst(b.x0,GY-60,["#7C5CFF","#B9A6FF","#FFF3D6"],16,260);
+  showToast(`${b.need} קוביות נמתחות לקרשים... 🔨`,1800);
+}
+/* סיום עולם. שלושה סוגי מסך: מעבר רגיל · **מעבר בין מקצועות** (נקודת הנשימה
+   הטבעית, וגם נקודת השמירה) · סיום המשחק. */
+function completeStage(){
+  const plan=curPlan();
+  const last=state.stageIdx>=plan.length-1;
+  const cur=plan[state.stageIdx], nxt=last?null:plan[state.stageIdx+1];
+  $("stCandy").textContent=state.candy;
+  $("stCubes").textContent=state.cubesTotal;
+  $("stStars").textContent=`${state.stars}/${plan.length}`;
+  const s=Math.round(state.time);
+  $("stTime").textContent=`${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`;
+  $("winNote").textContent="";
+  if(last){
+    $("winTitle").textContent="🏆 כל הכבוד!";
+    $("winSub").textContent=`עברתם את כל ${plan.length} העולמות והגעתם עד הסוף!`;
+    $("againBtn").textContent="עוד פעם מההתחלה!";
+    if(session){ clearProgress(); }
+  }else{
+    const nw=WORLDS[nxt.w];
+    if(nxt.subjectHe&&nxt.subjectHe!==cur.subjectHe){
+      $("winTitle").textContent=`${SUBJ_EMOJI[cur.subject]||"🎉"} סיימנו את ה${cur.subjectHe}!`;
+      $("winSub").innerHTML=`עכשיו עוברים ל<b>${nxt.subjectHe}</b> — ${nw.emoji} ${nw.name}`;
+      $("againBtn").textContent=`קדימה ל${nxt.subjectHe} ${SUBJ_EMOJI[nxt.subject]||""}`;
+      $("winNote").textContent="אפשר גם לעצור כאן ולהמשיך בפעם אחרת — המשחק זוכר איפה הייתם 💾";
+    }else if(!nxt.thread){
+      $("winTitle").textContent="🎯 סיימנו את המיפוי!";
+      $("winSub").innerHTML=`מכאן זה פרס: <b>${nw.name}</b> ${nw.emoji} — עולם בלי שאלות, רק אתגר קפיצה.`;
+      $("againBtn").textContent=`לעולם הבונוס ${nw.emoji}`;
+      /* המיפוי האמיתי נגמר כאן — דוחפים את הדוח עכשיו, לא מחכים לעולם הבונוס.
+         ילד לא תמיד ממשיך לשחק בו, ואז הדוח לא היה נשמר בכלל (החלטת שני:
+         "הדוח של כל תלמיד ישמר במערכת" — צריך לקרות גם אם הבונוס לא נגמר). */
+      if(session) authPushFinished(buildReport());
+    }else{
+      $("winTitle").textContent=`${W.emoji} עולם ${state.stageIdx+1} הושלם!`;
+      $("winSub").textContent=`ממשיכים אל ${nw.name} ${nw.emoji} — הגשרים שם צריכים יותר קוביות!`;
+      $("againBtn").textContent=`לעולם הבא ${nw.emoji}`;
+    }
+    saveProgress();
+  }
+  $("winOv").classList.remove("hidden");
+  state.running=false;
+}
+
+function update(dt){
+  state.time+=dt;
+  const p=player;
+
+  /* movement */
+  const accel=p.onGround?2600:1700, fric=p.onGround?2400:250;
+  if(keys.L&&!keys.R){ p.vx-=accel*dt; p.face=-1; }
+  else if(keys.R&&!keys.L){ p.vx+=accel*dt; p.face=1; }
+  else{ const s=Math.sign(p.vx); p.vx-=s*Math.min(Math.abs(p.vx),fric*dt); }
+  p.vx=Math.max(-MAXVX,Math.min(MAXVX,p.vx));
+
+  p.coyote=p.onGround?0.1:Math.max(0,p.coyote-dt);
+  p.jbuf=Math.max(0,p.jbuf-dt);
+  /* כנפיים (נוצה 🪶): קפיצה נוספת אחת באוויר, לזמן מוגבל. מתאפסת בכל נחיתה. */
+  if(p.wings>0){
+    p.wings=Math.max(0,p.wings-dt);
+    if(Math.ceil(p.wings)!==p.wingsShown){ p.wingsShown=Math.ceil(p.wings); syncHud(); }
+    if(p.wings===0) showToast("הכנפיים נעלמו 🪶",1500);
+  }
+  if(p.onGround) p.airJumps=p.wings>0?1:0;
+  if(p.jbuf>0&&p.coyote>0){
+    p.vy=-JUMP_V; p.jbuf=0; p.coyote=0; p.jcut=false; p.onGround=false; sfx.jump();
+    spawnBurst(p.x+PW/2,p.y+PH,["#FFFFFF","#DDEECC"],5,120);
+  }else if(p.jbuf>0&&p.wings>0&&p.airJumps>0){
+    p.vy=-DBLJUMP_V; p.jbuf=0; p.jcut=false; p.airJumps--; sfx.wing();
+    spawnBurst(p.x+PW/2,p.y+PH/2,["#B9A6FF","#FFFFFF","#7C5CFF"],12,220);
+  }
+  p.vy=Math.min(1200,p.vy+GRAV*dt);
+
+  /* פלטפורמות נעות — מזיזים אותן לפני השחקן, ומי שעומד עליהן נסחף איתן */
+  if(movers.length){
+    moveMovers(state.time);
+    if(p.ride&&movers.indexOf(p.ride)>=0){ p.x+=p.ride.dx; p.y+=p.ride.dy; }
+  }
+  p.ride=null;
+
+  const S=solids();
+  /* X — פתרון החדירה נעשה לפי כיוון התנועה, וזאת מלכודת: דמות שנדחפה *לתוך*
+     גוש (פלטפורמה נעה דוחפת אותה לקיר) יוצאת בכל לחיצה לצד ההפוך — ימינה
+     מקפיצה שמאלה ולהפך — ולעולם אינה משתחררת. לכן חדירה עמוקה, וכן vx=0,
+     נפתרות לפי הצד הקרוב ולא לפי הכיוון. */
+  p.x+=p.vx*dt;
+  for(const r of S){ if(overlap(p.x,p.y,PW,PH,r)){
+    const deep = p.vx===0 || (p.vx>0 ? (p.x+PW)-r.x : (r.x+r.w)-p.x) > PW*0.6;
+    if(deep) p.x = (p.x+PW/2 < r.x+r.w/2) ? r.x-PW : r.x+r.w;
+    else if(p.vx>0) p.x=r.x-PW;
+    else p.x=r.x+r.w;
+    p.vx=0; } }
+  /* Y */
+  const prevBottom=p.y+PH;
+  p.y+=p.vy*dt;
+  const wasAir=!p.onGround;
+  p.onGround=false;
+  for(const r of S){ if(overlap(p.x,p.y,PW,PH,r)){
+    if(p.vy>0){ p.y=r.y-PH; p.vy=0; p.onGround=true; }
+    else if(p.vy<0){ p.y=r.y+r.h; p.vy=0; p.jcut=true; } } }
+  for(const pl of PLATS){
+    if(p.vy>0 && prevBottom<=pl.y+4 && overlap(p.x,p.y,PW,PH,pl)){
+      p.y=pl.y-PH; p.vy=0; p.onGround=true; }
+  }
+  for(const m of movers){
+    if(p.vy>=0 && prevBottom<=m.y+6 && overlap(p.x,p.y,PW,PH,{x:m.x,y:m.y,w:m.w,h:m.h})){
+      p.y=m.y-PH; p.vy=0; p.onGround=true; p.ride=m; }
+  }
+  /* קפיצים: נגיעה מלמעלה מעיפה ~296px. אין "מוות" ואין עונש — רק תנופה. */
+  for(const s of springs){
+    s.t=Math.max(0,s.t-dt*3);
+    if(p.vy>=0 && p.x+PW>s.x-24 && p.x<s.x+24 && p.y+PH>=s.y-18 && p.y+PH<=s.y+12){
+      p.y=s.y-18-PH; p.vy=-SPRING_V; p.onGround=false; p.jcut=true; s.t=1;
+      p.airJumps=p.wings>0?1:0;
+      sfx.spring(); spawnBurst(s.x,s.y-12,["#FFD166","#FF9F6E","#FFFFFF"],14,260);
+    }
+  }
+  if(wasAir&&p.onGround){ p.squash=1; spawnBurst(p.x+PW/2,p.y+PH,["#FFFFFF"],3,90); }
+  p.squash=Math.max(0,p.squash-dt*4);
+  p.walk+=Math.abs(p.vx)*dt*0.045;
+  p.blink=(p.blink+dt)%3.6;
+
+  /* water */
+  if(p.y>WY-24) respawn(true);
+
+  /* bridges */
+  for(const b of bridges){
+    if(b.building){
+      b.t+=dt;
+      const dur=buildDur(b);
+      const landed=Math.min(b.planks,Math.floor(b.t/dur*b.planks+0.5));
+      while(b.knocked<landed){ b.knocked++; sfx.knock();
+        spawnBurst(b.x0+(b.knocked-0.5)*((b.x1-b.x0)/b.planks),GY+6,["#7C5CFF","#B9A6FF"],6,150); }
+      if(b.t>=dur){ b.building=false; b.built=true; sfx.built();
+        showToast("הגשר מוכן! אפשר לעבור 🎉",2200); }
+      continue;
+    }
+    if(b.built) continue;
+    const d=b.x0-(p.x+PW);
+    if(!(d>-24&&d<90)){ b.hold=false; b.mode=null; } // התרחקנו מהגשר — הבחירה מתאפסת
+    if(d>-24&&d<90&&p.onGround){
+      if(state.cubes>=b.need) startBuild(b);
+      else if(session&&!b.hold&&state.time>=(b.coolT||0)&&(activeThread()||probeDue()||(ownThread()&&profileQuestion(ownThread())))){
+        if(b.mode==="question") bridgeQuestion(b);   // כבר בחרו לענות — ממשיכים ישר
+        else bridgeChoice(b);                        // לחזור לאסוף או לענות?
+      }
+      else if(state.time-state.gateMsgT>2.6){
+        state.gateMsgT=state.time;
+        const miss=b.need-state.cubes;
+        showToast(`לגשר הזה צריך בדיוק ${b.need} קוביות — חסרות עוד ${miss} 🧊`,2400);
+      }
+    }
+  }
+  /* checkpoints */
+  for(const b of bridges) if(b.built&&p.x>b.x1+20) p.checkX=Math.max(p.checkX,b.x1+40);
+
+  /* cubes — נגיעה פותחת שאלה. אחרי שאלה שלא נענתה נכון הקובייה "מחזיקה"
+     עד שיוצאים ממנה, כדי שלא ייפתח מודאל שוב באותה נגיעה. */
+  for(const c of cubes){
+    if(c.taken) continue;
+    const bob=Math.sin(state.time*2+c.ph)*5;
+    const touching=overlap(p.x,p.y,PW,PH,{x:c.x-16,y:c.y+bob-16,w:32,h:32});
+    if(!touching){ c.hold=false; continue; }
+    if(c.hold) continue;
+    questionGate(c,()=>collectCube(c),()=>{ c.hold=true; c.tries++; });
+  }
+  /* candies */
+  for(const c of candies){
+    if(c.taken) continue;
+    const bob=Math.sin(state.time*2.4+c.ph)*4;
+    if(overlap(p.x,p.y,PW,PH,{x:c.x-13,y:c.y+bob-13,w:26,h:26})){
+      c.taken=true; state.candy+=10; syncHud(); sfx.candy();
+      spawnBurst(c.x,c.y,["#FF6FA5","#FFD166","#FFFFFF","#FF9F6E"],12,240);
+      floaters.push({x:c.x,y:c.y-16,text:"+10",t:0});
+    }
+  }
+  /* 💎 יהלום — 50 נקודות, תמיד בגובה שדורש קפיץ / כנפיים / רצף קפיצות */
+  for(const g of gems){
+    if(g.taken) continue;
+    const bob=Math.sin(state.time*2.2+g.ph)*4;
+    if(overlap(p.x,p.y,PW,PH,{x:g.x-15,y:g.y+bob-15,w:30,h:30})){
+      g.taken=true; state.candy+=50; syncHud(); sfx.gem();
+      spawnBurst(g.x,g.y,["#7CE8E8","#FFFFFF","#B9A6FF"],18,300);
+      floaters.push({x:g.x,y:g.y-18,text:"+50",t:0});
+    }
+  }
+  /* 🪶 נוצה — קפיצה כפולה ל-14 שניות */
+  for(const f of feathers){
+    if(f.taken) continue;
+    const bob=Math.sin(state.time*2+f.ph)*5;
+    if(overlap(p.x,p.y,PW,PH,{x:f.x-15,y:f.y+bob-15,w:30,h:30})){
+      f.taken=true; p.wings=WINGS_SEC; p.airJumps=1; p.wingsShown=-1; syncHud(); sfx.wing();
+      spawnBurst(f.x,f.y,["#B9A6FF","#FFFFFF"],16,260);
+      showToast("כנפיים! אפשר לקפוץ פעם שנייה באוויר 🪶",2600);
+    }
+  }
+  /* ⭐ כוכב סודי — אחד בכל עולם, המקום הכי קשה להגיע אליו. נספר בדוח. */
+  if(starItem&&!starItem.taken){
+    const bob=Math.sin(state.time*1.6)*6;
+    if(overlap(p.x,p.y,PW,PH,{x:starItem.x-18,y:starItem.y+bob-18,w:36,h:36})){
+      starItem.taken=true; state.stars++; state.candy+=100;
+      if(session) session.stars=state.stars;
+      syncHud(); sfx.star();
+      spawnBurst(starItem.x,starItem.y,["#FFD166","#FFF3B0","#FFFFFF","#FF9F6E"],34,400);
+      floaters.push({x:starItem.x,y:starItem.y-20,text:"+100",t:0});
+      showToast("מצאתם את הכוכב הסודי! ⭐",2800);
+    }
+  }
+  /* flag / stage complete */
+  if(!state.flagHit && p.x+PW/2>W.flagX-8){
+    state.flagHit=true; state.flagT=state.time; sfx.win();
+    spawnBurst(W.flagX,GY-120,["#FF6FA5","#FFD166","#7C5CFF","#4CC38A","#8ED4F5"],40,420);
+  }
+  if(state.flagHit){
+    if(state.time-state.flagT<1.6 && Math.random()<0.3)
+      spawnBurst(W.flagX-120+Math.random()*240,GY-160,["#FF6FA5","#FFD166","#7C5CFF","#4CC38A"],8,300);
+    if(state.time-state.flagT>1.4 && $("winOv").classList.contains("hidden")) completeStage();
+  }
+
+  /* גלאי היתקעות: מקש כיוון לחוץ והדמות אינה זזה. אחרי 2.5 שניות מציעים את
+     🆘 — לחיצה לתוך קיר היא מצב לגיטימי, ולכן זו הצעה ולא פעולה. */
+  if((keys.L||keys.R)&&Math.abs(p.x-(state.stuckX==null?-1e9:state.stuckX))<2){
+    state.stuckT=(state.stuckT||0)+dt;
+    if(state.stuckT>2.5&&!state.stuckHinted){
+      state.stuckHinted=true;
+      showToast("נתקעתם? לחצו 🆘 למעלה כדי לחזור לנקודת הביניים",3400);
+    }
+  }else{ state.stuckT=0; state.stuckX=p.x; }
+
+  /* camera */
+  const target=p.x+PW/2-viewW*0.45+p.face*60;
+  cam.x+= (target-cam.x)*Math.min(1,dt*4.5);
+  cam.x=Math.max(W.x0,Math.min(W.x1-viewW,cam.x));
+
+  /* particles / floaters */
+  for(let i=particles.length-1;i>=0;i--){
+    const q=particles[i]; q.t+=dt;
+    if(q.t>q.life){ particles.splice(i,1); continue; }
+    q.vy+=q.grav*dt; q.x+=q.vx*dt; q.y+=q.vy*dt;
+  }
+  for(let i=floaters.length-1;i>=0;i--){
+    const f=floaters[i]; f.t+=dt; if(f.t>1.1) floaters.splice(i,1);
+  }
+}
+
+/* ---------- drawing ---------- */
+function rr(x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r);
+  ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+function tri(x,yTop,yBot,w){ ctx.beginPath(); ctx.moveTo(x,yTop); ctx.lineTo(x-w,yBot); ctx.lineTo(x+w,yBot); ctx.closePath(); ctx.fill(); }
+
+function drawSky(pal){
+  const g=ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,pal.skyT); g.addColorStop(1,pal.skyB);
+  ctx.fillStyle=g; ctx.fillRect(0,0,viewW,H);
+  /* השמש (או הירח, בעולם הלילה) והעננים — ניתנים להתאמה פר עולם, כדי
+     ששמש לבנה בוהקת לא תופיע ביער לילה או מעל הר געש. */
+  const sx=110-cam.x*0.02, sy=86;
+  const g0=W.sunGlow||"rgba(255,240,180,0.95)", g1=W.sunGlow2||"rgba(255,225,140,0.55)",
+        g2=W.sunGlow0||"rgba(255,225,140,0)";
+  const rg=ctx.createRadialGradient(sx,sy,10,sx,sy,90);
+  rg.addColorStop(0,g0); rg.addColorStop(0.35,g1); rg.addColorStop(1,g2);
+  ctx.fillStyle=rg; ctx.beginPath(); ctx.arc(sx,sy,90,0,7); ctx.fill();
+  ctx.fillStyle=W.sunCol||"#FFECB0"; ctx.beginPath(); ctx.arc(sx,sy,26,0,7); ctx.fill();
+  if(W.moon){                          // סהר: עיגול בצבע השמיים "מכרסם" את הדיסקה
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(sx+8,sy-4,19,0,7); ctx.fill();
+  }
+  ctx.fillStyle=W.cloudCol||"rgba(255,255,255,0.88)";
+  const span=viewW+400;
+  for(const c of CLOUDS){
+    let x=((c.x - cam.x*0.22 + state.time*c.v) % span + span) % span - 200;
+    ctx.beginPath();
+    ctx.arc(x,c.y,20*c.s,0,7); ctx.arc(x+22*c.s,c.y-9*c.s,16*c.s,0,7);
+    ctx.arc(x+44*c.s,c.y,18*c.s,0,7); ctx.fill();
+  }
+}
+function drawHills(pal){
+  const layer=(f,base,amp,col,alpha)=>{
+    ctx.globalAlpha=alpha; ctx.fillStyle=col; ctx.beginPath(); ctx.moveTo(0,H);
+    for(let sx=0;sx<=viewW+24;sx+=24){
+      const wx=sx+cam.x*f;
+      const y=base - amp*(Math.sin(wx*0.004)*0.6+Math.sin(wx*0.0113+2)*0.4+1)/2 - amp*0.2;
+      ctx.lineTo(sx,y);
+    }
+    ctx.lineTo(viewW,H); ctx.closePath(); ctx.fill(); ctx.globalAlpha=1;
+  };
+  layer(0.3,392,86,pal.far,0.85);
+  layer(0.55,432,64,pal.near,0.95);
+}
+function drawWater(){
+  ctx.fillStyle=W.water; ctx.fillRect(W.x0,WY,W.x1-W.x0,H-WY+40);
+  ctx.strokeStyle=W.foam||"rgba(255,255,255,0.5)"; ctx.lineWidth=2;
+  for(const b of bridges){
+    for(let x=b.x0+8;x<b.x1-8;x+=34){
+      const y=WY+5+Math.sin(state.time*2.2+x*0.09)*2.5;
+      ctx.beginPath(); ctx.moveTo(x,y); ctx.quadraticCurveTo(x+8,y-3,x+16,y); ctx.stroke();
+    }
+  }
+}
+function drawGround(pal){
+  for(const [x0,x1] of W.segs){
+    ctx.fillStyle=pal.dirt; ctx.fillRect(x0,GY,x1-x0,H-GY+40);
+    ctx.fillStyle=pal.grass; ctx.fillRect(x0,GY,x1-x0,16);
+    ctx.fillStyle="rgba(0,0,0,0.14)"; ctx.fillRect(x0,GY+16,x1-x0,3);
+  }
+  ctx.strokeStyle=pal.near; ctx.lineWidth=2;
+  for(const t of TUFTS){
+    const y=GY;
+    ctx.beginPath(); ctx.moveTo(t.x,y); ctx.lineTo(t.x-3,y-7-t.o*4);
+    ctx.moveTo(t.x+3,y); ctx.lineTo(t.x+4,y-9-t.o*3);
+    ctx.moveTo(t.x+6,y); ctx.lineTo(t.x+9,y-6); ctx.stroke();
+  }
+}
+/* ---------- decor: three styles ---------- */
+function drawDecor(pal){
+  for(const d of DECOR){
+    if(d.x<cam.x-120||d.x>cam.x+viewW+120) continue;
+    const s=d.s, x=d.x;
+    if(W.deco==="meadow"){
+      if(d.t==="tree"){
+        ctx.fillStyle=pal.trunk; ctx.fillRect(x-5*s,GY-56*s,10*s,58*s);
+        ctx.fillStyle=pal.tree;
+        ctx.beginPath(); ctx.arc(x,GY-72*s,26*s,0,7); ctx.arc(x-20*s,GY-56*s,20*s,0,7);
+        ctx.arc(x+20*s,GY-56*s,20*s,0,7); ctx.fill();
+        ctx.fillStyle="rgba(255,255,255,0.12)";
+        ctx.beginPath(); ctx.arc(x-8*s,GY-80*s,10*s,0,7); ctx.fill();
+      }else if(d.t==="bush"){
+        ctx.fillStyle=pal.tree;
+        ctx.beginPath(); ctx.arc(x,GY-12*s,14*s,0,7); ctx.arc(x+14*s,GY-9*s,11*s,0,7);
+        ctx.arc(x-14*s,GY-9*s,11*s,0,7); ctx.fill();
+      }else{
+        const cols=["#FF6FA5","#FFD166","#FF9F6E","#B9A6FF"];
+        ctx.strokeStyle="#4E8F4E"; ctx.lineWidth=2;
+        ctx.beginPath(); ctx.moveTo(x,GY); ctx.lineTo(x,GY-10); ctx.stroke();
+        ctx.fillStyle=cols[Math.floor(d.c*4)];
+        for(let i=0;i<5;i++){ const a=i/5*Math.PI*2;
+          ctx.beginPath(); ctx.arc(x+Math.cos(a)*4,GY-10+Math.sin(a)*4,3,0,7); ctx.fill(); }
+        ctx.fillStyle="#FFF3B0"; ctx.beginPath(); ctx.arc(x,GY-10,2.4,0,7); ctx.fill();
+      }
+    }else if(W.deco==="snow"){
+      if(d.t==="tree"){        /* אשוח מושלג */
+        ctx.fillStyle=pal.trunk; ctx.fillRect(x-4*s,GY-16*s,8*s,18*s);
+        ctx.fillStyle=pal.tree;
+        tri(x,GY-92*s,GY-56*s,20*s); tri(x,GY-72*s,GY-36*s,27*s); tri(x,GY-52*s,GY-14*s,34*s);
+        ctx.fillStyle="rgba(255,255,255,0.9)";
+        tri(x,GY-92*s,GY-78*s,9*s); tri(x,GY-72*s,GY-60*s,11*s); tri(x,GY-52*s,GY-41*s,13*s);
+      }else if(d.t==="bush"){  /* איש שלג */
+        ctx.fillStyle="#FFFFFF";
+        ctx.beginPath(); ctx.arc(x,GY-10*s,11*s,0,7); ctx.fill();
+        ctx.beginPath(); ctx.arc(x,GY-26*s,7.5*s,0,7); ctx.fill();
+        ctx.fillStyle="#22303F";
+        ctx.beginPath(); ctx.arc(x-2.6*s,GY-28*s,1.2*s,0,7); ctx.arc(x+2.6*s,GY-28*s,1.2*s,0,7); ctx.fill();
+        ctx.beginPath(); ctx.arc(x,GY-12*s,1.1*s,0,7); ctx.arc(x,GY-7*s,1.1*s,0,7); ctx.fill();
+        ctx.fillStyle="#FF9F3D";
+        ctx.beginPath(); ctx.moveTo(x+2*s,GY-26.5*s); ctx.lineTo(x+9*s,GY-24.5*s); ctx.lineTo(x+2*s,GY-23.5*s); ctx.closePath(); ctx.fill();
+      }else{                   /* גביש קרח */
+        ctx.strokeStyle="#BFE3F5"; ctx.lineWidth=2;
+        for(let i=0;i<3;i++){ const a=i*Math.PI/3;
+          ctx.beginPath(); ctx.moveTo(x-Math.cos(a)*6,GY-10-Math.sin(a)*6);
+          ctx.lineTo(x+Math.cos(a)*6,GY-10+Math.sin(a)*6); ctx.stroke(); }
+        ctx.fillStyle="#E8F6FF"; ctx.beginPath(); ctx.arc(x,GY-10,2,0,7); ctx.fill();
+      }
+    }else if(W.deco==="volcano"){
+      if(d.t==="tree"){        /* עמוד בזלת מעשן */
+        ctx.fillStyle=pal.trunk; ctx.fillRect(x-9*s,GY-64*s,18*s,66*s);
+        ctx.fillStyle=pal.tree;  ctx.fillRect(x-9*s,GY-64*s,18*s,10*s);
+        ctx.fillStyle="rgba(255,180,90,0.30)";
+        ctx.beginPath(); ctx.arc(x,GY-78*s,10*s,0,7); ctx.arc(x+7*s,GY-94*s,7*s,0,7); ctx.fill();
+      }else if(d.t==="bush"){  /* סלע לוהט */
+        ctx.fillStyle=pal.dirt;
+        ctx.beginPath(); ctx.moveTo(x-16*s,GY); ctx.lineTo(x-7*s,GY-15*s);
+        ctx.lineTo(x+6*s,GY-18*s); ctx.lineTo(x+16*s,GY); ctx.closePath(); ctx.fill();
+        ctx.fillStyle="rgba(255,120,60,0.55)"; ctx.fillRect(x-9*s,GY-5*s,18*s,4*s);
+      }else{                   /* סדק לוהט בקרקע */
+        ctx.strokeStyle="#FF8A3D"; ctx.lineWidth=2.5;
+        ctx.beginPath(); ctx.moveTo(x-8,GY-1); ctx.lineTo(x-2,GY-7);
+        ctx.lineTo(x+3,GY-2); ctx.lineTo(x+9,GY-9); ctx.stroke();
+      }
+    }else if(W.deco==="beach"){
+      if(d.t==="tree"){        /* דקל */
+        ctx.strokeStyle=pal.trunk; ctx.lineWidth=7*s; ctx.lineCap="round";
+        ctx.beginPath(); ctx.moveTo(x,GY); ctx.quadraticCurveTo(x+7*s,GY-36*s,x+3*s,GY-64*s); ctx.stroke();
+        ctx.lineCap="butt";
+        ctx.fillStyle=pal.tree;
+        for(let i=0;i<5;i++){ const a=-2.5+i*0.62;
+          ctx.beginPath(); ctx.ellipse(x+3*s+Math.cos(a)*20*s,GY-64*s+Math.sin(a)*11*s,
+            19*s,7*s,a*0.55,0,7); ctx.fill(); }
+        ctx.fillStyle="#C98A4B";
+        ctx.beginPath(); ctx.arc(x+8*s,GY-58*s,4*s,0,7); ctx.arc(x-4*s,GY-56*s,3.4*s,0,7); ctx.fill();
+      }else if(d.t==="bush"){  /* צדף */
+        ctx.fillStyle="#FFD9E4";
+        ctx.beginPath(); ctx.arc(x,GY,13*s,Math.PI,0); ctx.closePath(); ctx.fill();
+        ctx.strokeStyle="#E8A6BE"; ctx.lineWidth=1.6;
+        for(let i=0;i<4;i++){ const a=Math.PI+0.31+i*0.52;
+          ctx.beginPath(); ctx.moveTo(x,GY); ctx.lineTo(x+Math.cos(a)*13*s,GY+Math.sin(a)*13*s); ctx.stroke(); }
+      }else{                   /* כוכב ים */
+        ctx.fillStyle="#FF9F6E"; ctx.beginPath();
+        for(let i=0;i<10;i++){ const r=i%2?3:8, a=i/10*Math.PI*2-Math.PI/2;
+          ctx.lineTo(x+Math.cos(a)*r,GY-6+Math.sin(a)*r); }
+        ctx.closePath(); ctx.fill();
+      }
+    }else if(W.deco==="desert"){
+      if(d.t==="tree"){        /* קקטוס */
+        ctx.fillStyle=pal.tree;
+        rr(x-7*s,GY-52*s,14*s,54*s,7*s); ctx.fill();
+        rr(x-22*s,GY-38*s,9*s,22*s,4*s); ctx.fill();
+        rr(x-22*s,GY-38*s,26*s,9*s,4*s); ctx.fill();
+        rr(x+13*s,GY-46*s,9*s,18*s,4*s); ctx.fill();
+        rr(x-2*s,GY-46*s,24*s,9*s,4*s); ctx.fill();
+        ctx.fillStyle="#FF6FA5"; ctx.beginPath(); ctx.arc(x,GY-56*s,4*s,0,7); ctx.fill();
+      }else if(d.t==="bush"){  /* פירמידה קטנה ברקע */
+        ctx.fillStyle=pal.dirt; tri(x,GY-30*s,GY,22*s);
+        ctx.fillStyle="rgba(255,255,255,0.18)";
+        ctx.beginPath(); ctx.moveTo(x,GY-30*s); ctx.lineTo(x+22*s,GY); ctx.lineTo(x+7*s,GY); ctx.closePath(); ctx.fill();
+      }else{                   /* שיח גלגל */
+        ctx.strokeStyle="#B8834E"; ctx.lineWidth=1.8;
+        for(let i=0;i<5;i++){ const a=i/5*Math.PI*2;
+          ctx.beginPath(); ctx.moveTo(x-Math.cos(a)*8,GY-8-Math.sin(a)*8);
+          ctx.lineTo(x+Math.cos(a)*8,GY-8+Math.sin(a)*8); ctx.stroke(); }
+      }
+    }else if(W.deco==="night"){
+      if(d.t==="tree"){        /* עץ לילה עם פנס */
+        ctx.fillStyle=pal.trunk; ctx.fillRect(x-5*s,GY-60*s,10*s,62*s);
+        ctx.fillStyle=pal.tree;
+        ctx.beginPath(); ctx.arc(x,GY-76*s,25*s,0,7); ctx.arc(x-19*s,GY-60*s,18*s,0,7);
+        ctx.arc(x+19*s,GY-60*s,18*s,0,7); ctx.fill();
+        const lg=ctx.createRadialGradient(x+16*s,GY-46*s,2,x+16*s,GY-46*s,20*s);
+        lg.addColorStop(0,"rgba(255,220,140,0.85)"); lg.addColorStop(1,"rgba(255,220,140,0)");
+        ctx.fillStyle=lg; ctx.beginPath(); ctx.arc(x+16*s,GY-46*s,20*s,0,7); ctx.fill();
+        ctx.fillStyle="#FFE9A8"; ctx.beginPath(); ctx.arc(x+16*s,GY-46*s,4*s,0,7); ctx.fill();
+      }else if(d.t==="bush"){  /* פטרייה זוהרת */
+        ctx.fillStyle="#E8E2F5"; ctx.fillRect(x-3*s,GY-14*s,6*s,15*s);
+        const mg=ctx.createRadialGradient(x,GY-18*s,2,x,GY-18*s,22*s);
+        mg.addColorStop(0,"rgba(140,255,220,0.55)"); mg.addColorStop(1,"rgba(140,255,220,0)");
+        ctx.fillStyle=mg; ctx.beginPath(); ctx.arc(x,GY-18*s,22*s,0,7); ctx.fill();
+        ctx.fillStyle="#5FE8C4";
+        ctx.beginPath(); ctx.arc(x,GY-16*s,12*s,Math.PI,0); ctx.closePath(); ctx.fill();
+        ctx.fillStyle="rgba(255,255,255,0.7)";
+        ctx.beginPath(); ctx.arc(x-4*s,GY-21*s,2*s,0,7); ctx.arc(x+5*s,GY-19*s,1.6*s,0,7); ctx.fill();
+      }else{                   /* פרח לילה */
+        ctx.strokeStyle="#3E6E5E"; ctx.lineWidth=2;
+        ctx.beginPath(); ctx.moveTo(x,GY); ctx.lineTo(x,GY-11); ctx.stroke();
+        ctx.fillStyle="#B9A6FF";
+        for(let i=0;i<5;i++){ const a=i/5*Math.PI*2;
+          ctx.beginPath(); ctx.arc(x+Math.cos(a)*4,GY-11+Math.sin(a)*4,3,0,7); ctx.fill(); }
+        ctx.fillStyle="#FFF3B0"; ctx.beginPath(); ctx.arc(x,GY-11,2.2,0,7); ctx.fill();
+      }
+    }else if(W.deco==="sky"){
+      if(d.t==="tree"){        /* צריח ענן */
+        ctx.fillStyle=pal.trunk; rr(x-13*s,GY-58*s,26*s,60*s,8*s); ctx.fill();
+        ctx.fillStyle=pal.tree; tri(x,GY-84*s,GY-56*s,19*s);
+        ctx.fillStyle="rgba(255,255,255,0.55)"; rr(x-8*s,GY-44*s,16*s,18*s,7*s); ctx.fill();
+      }else if(d.t==="bush"){  /* ענן קטן */
+        ctx.fillStyle="rgba(255,255,255,0.9)";
+        ctx.beginPath(); ctx.arc(x-10*s,GY-8*s,9*s,0,7); ctx.arc(x,GY-13*s,12*s,0,7);
+        ctx.arc(x+11*s,GY-8*s,9*s,0,7); ctx.fill();
+      }else{                   /* בלון */
+        const cols=["#FF6FA5","#FFD166","#7CD9E8","#B9A6FF"];
+        ctx.strokeStyle="rgba(90,107,124,0.6)"; ctx.lineWidth=1.4;
+        ctx.beginPath(); ctx.moveTo(x,GY); ctx.lineTo(x,GY-18); ctx.stroke();
+        ctx.fillStyle=cols[Math.floor(d.c*4)];
+        ctx.beginPath(); ctx.ellipse(x,GY-27,8,10,0,0,7); ctx.fill();
+        ctx.fillStyle="rgba(255,255,255,0.5)"; ctx.beginPath(); ctx.arc(x-3,GY-30,2.4,0,7); ctx.fill();
+      }
+    }else{ /* candy */
+      if(d.t==="tree"){        /* עץ סוכרייה על מקל */
+        ctx.fillStyle="#F5F1E6"; ctx.fillRect(x-3.5*s,GY-62*s,7*s,64*s);
+        ctx.fillStyle=pal.tree;
+        ctx.beginPath(); ctx.arc(x,GY-74*s,24*s,0,7); ctx.fill();
+        ctx.strokeStyle="rgba(255,255,255,0.85)"; ctx.lineWidth=5*s;
+        ctx.beginPath(); ctx.arc(x,GY-74*s,13*s,0.5,4.2); ctx.stroke();
+        ctx.fillStyle="rgba(255,255,255,0.35)";
+        ctx.beginPath(); ctx.arc(x-8*s,GY-82*s,6*s,0,7); ctx.fill();
+      }else if(d.t==="bush"){  /* סוכריית גומי */
+        const cols=["#FF6FA5","#FFD166","#7CD97C","#B9A6FF"];
+        ctx.fillStyle=cols[Math.floor(d.c*4)];
+        ctx.beginPath(); ctx.arc(x,GY,14*s,Math.PI,0); ctx.closePath(); ctx.fill();
+        ctx.fillStyle="rgba(255,255,255,0.7)";
+        ctx.beginPath(); ctx.arc(x-4*s,GY-8*s,1.5,0,7); ctx.arc(x+5*s,GY-5*s,1.5,0,7); ctx.arc(x,GY-11*s,1.5,0,7); ctx.fill();
+      }else{                   /* מקל סוכרייה */
+        ctx.lineCap="round";
+        ctx.strokeStyle="#FFFFFF"; ctx.lineWidth=4.5;
+        ctx.beginPath(); ctx.moveTo(x,GY); ctx.lineTo(x,GY-12); ctx.arc(x-4,GY-12,4,0,Math.PI,true); ctx.stroke();
+        ctx.strokeStyle="#E84D5B"; ctx.setLineDash([4,4]);
+        ctx.beginPath(); ctx.moveTo(x,GY); ctx.lineTo(x,GY-12); ctx.arc(x-4,GY-12,4,0,Math.PI,true); ctx.stroke();
+        ctx.setLineDash([]); ctx.lineCap="butt";
+      }
+    }
+  }
+}
+function drawPlatforms(pal){
+  for(const p of PLATS){
+    if(p.x+p.w<cam.x||p.x>cam.x+viewW) continue;
+    ctx.fillStyle=pal.dirt; rr(p.x,p.y,p.w,p.h,6); ctx.fill();
+    ctx.fillStyle=pal.grass; rr(p.x,p.y,p.w,8,5); ctx.fill();
+  }
+}
+/* גשר: כל קרש = קובייה אחת שנמתחה — בדיוק need קרשים */
+function drawBridges(){
+  for(const b of bridges){
+    const n=b.planks, pw=(b.x1-b.x0)/n, dur=buildDur(b);
+    ctx.fillStyle="#6E4327";
+    ctx.fillRect(b.x0-8,GY-30,8,32); ctx.fillRect(b.x1,GY-30,8,32);
+    if(b.built||b.building){
+      for(let i=0;i<n;i++){
+        let yo=0,vis=true;
+        if(b.building){
+          const tt=(b.t-(i*dur/n))/(dur/n*1.6);
+          if(tt<=0){vis=false;} else yo=-(1-easeOutBounce(Math.min(1,tt)))*280;
+        }
+        if(!vis) continue;
+        const x=b.x0+i*pw, yT=GY+yo+2;
+        /* קובייה מתוחה: חזית + פאה עליונה + צד — כמו קוביית הקסם */
+        ctx.fillStyle="#7C5CFF"; rr(x+3,yT,pw-9,14,3); ctx.fill();
+        ctx.fillStyle="#A78BFF"; ctx.beginPath();
+        ctx.moveTo(x+3,yT); ctx.lineTo(x+8,yT-6); ctx.lineTo(x+pw-1,yT-6); ctx.lineTo(x+pw-6,yT); ctx.closePath(); ctx.fill();
+        ctx.fillStyle="#5F45C9"; ctx.beginPath();
+        ctx.moveTo(x+pw-6,yT); ctx.lineTo(x+pw-1,yT-6); ctx.lineTo(x+pw-1,yT+8); ctx.lineTo(x+pw-6,yT+14); ctx.closePath(); ctx.fill();
+        ctx.globalAlpha=0.55; ctx.fillStyle="#FFFFFF"; ctx.textAlign="center";
+        ctx.font="800 12px 'Segoe UI',Arial";
+        ctx.fillText("?",x+pw/2-2,yT+11); ctx.globalAlpha=1;
+      }
+      if(b.built){
+        ctx.strokeStyle="#8A5A3B"; ctx.lineWidth=2.5;
+        ctx.beginPath(); ctx.moveTo(b.x0-4,GY-28);
+        ctx.quadraticCurveTo((b.x0+b.x1)/2,GY-12,b.x1+4,GY-28); ctx.stroke();
+      }
+    }else{
+      ctx.save();
+      const gx=b.x0-10;
+      ctx.fillStyle="#6E4327"; ctx.fillRect(gx-2,GY-86,6,86);
+      for(const yy of [GY-42,GY-74]){
+        ctx.fillStyle="#E8E2D4"; rr(gx-26,yy,56,12,3); ctx.fill();
+        ctx.fillStyle="#D9534F";
+        for(let sx=0;sx<48;sx+=16) ctx.fillRect(gx-24+sx,yy+1.5,8,9);
+      }
+      const sxp=b.x0-78;
+      ctx.fillStyle="#6E4327"; ctx.fillRect(sxp-3,GY-64,7,64);
+      ctx.fillStyle="#C98A4B"; rr(sxp-46,GY-108,92,48,7); ctx.fill();
+      ctx.strokeStyle="#8A5A3B"; ctx.lineWidth=2; rr(sxp-46,GY-108,92,48,7); ctx.stroke();
+      ctx.fillStyle="#3A2A18"; ctx.textAlign="center";
+      ctx.font="700 13px 'Segoe UI',Arial";
+      ctx.fillText("לבניית הגשר",sxp,GY-89);
+      ctx.font="800 19px 'Segoe UI',Arial";
+      ctx.fillText(`🧊 × ${b.need}`,sxp,GY-68);
+      ctx.restore();
+    }
+  }
+}
+function drawCube(c){
+  const bob=Math.sin(state.time*2+c.ph)*5, x=c.x, y=c.y+bob, s=15;
+  const g=ctx.createRadialGradient(x,y,4,x,y,34);
+  g.addColorStop(0,"rgba(185,166,255,0.5)"); g.addColorStop(1,"rgba(185,166,255,0)");
+  ctx.fillStyle=g; ctx.beginPath(); ctx.arc(x,y,34,0,7); ctx.fill();
+  ctx.fillStyle="#7C5CFF"; ctx.fillRect(x-s,y-s+6,s*2,s*2-4);
+  ctx.fillStyle="#A78BFF"; ctx.beginPath();
+  ctx.moveTo(x-s,y-s+6); ctx.lineTo(x-s+7,y-s-2); ctx.lineTo(x+s+7,y-s-2); ctx.lineTo(x+s,y-s+6); ctx.closePath(); ctx.fill();
+  ctx.fillStyle="#5F45C9"; ctx.beginPath();
+  ctx.moveTo(x+s,y-s+6); ctx.lineTo(x+s+7,y-s-2); ctx.lineTo(x+s+7,y+s-6); ctx.lineTo(x+s,y+s+2); ctx.closePath(); ctx.fill();
+  ctx.fillStyle="#FFFFFF"; ctx.textAlign="center"; ctx.font="800 19px 'Segoe UI',Arial";
+  const asks=!!(session&&activeThread()&&isQuestionCube(c));    // ✦ = קובייה חופשית, ? = קובייה עם שאלה
+  ctx.fillText(c.tries?"↺":asks?"?":"✦",x,y+8);
+  if(c.tries){                                   // קובייה שמחכה לניסיון נוסף — הילה חמה, לא סימן כישלון
+    ctx.strokeStyle="rgba(255,209,102,"+(0.45+0.25*Math.sin(state.time*4+c.ph))+")";
+    ctx.lineWidth=3; ctx.beginPath(); ctx.arc(x,y,26,0,7); ctx.stroke();
+  }
+  if(Math.random()<0.06){
+    particles.push({x:x-14+Math.random()*28,y:y-14+Math.random()*28,vx:0,vy:-30,life:0.5,t:0,col:"#FFFFFF",size:2,grav:0});
+  }
+}
+function drawCandy(c){
+  const bob=Math.sin(state.time*2.4+c.ph)*4, x=c.x, y=c.y+bob;
+  ctx.save(); ctx.translate(x,y);
+  if(c.kind===0){
+    ctx.rotate(Math.sin(state.time*1.5+c.ph)*0.15);
+    ctx.fillStyle="#E8E2D4"; ctx.fillRect(-2,4,4,16);
+    ctx.fillStyle="#FF6FA5"; ctx.beginPath(); ctx.arc(0,-2,11,0,7); ctx.fill();
+    ctx.strokeStyle="#FFF"; ctx.lineWidth=3; ctx.beginPath();
+    ctx.arc(0,-2,6,0.5,3.7); ctx.stroke();
+  }else if(c.kind===1){
+    ctx.rotate(0.2+Math.sin(state.time*1.8+c.ph)*0.12);
+    ctx.fillStyle="#FF9F3D";
+    ctx.beginPath(); ctx.moveTo(-16,0); ctx.lineTo(-9,-7); ctx.lineTo(-9,7); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(16,0); ctx.lineTo(9,-7); ctx.lineTo(9,7); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(0,0,10,8,0,0,7); ctx.fill();
+    ctx.fillStyle="#FFD9A8"; ctx.beginPath(); ctx.ellipse(-3,-2,3,2.2,0,0,7); ctx.fill();
+  }else{
+    ctx.rotate(Math.sin(state.time*2+c.ph)*0.2);
+    ctx.fillStyle="#FFD166"; ctx.beginPath();
+    for(let i=0;i<10;i++){ const r=i%2?5.5:12, a=i/10*Math.PI*2-Math.PI/2;
+      ctx.lineTo(Math.cos(a)*r,Math.sin(a)*r); }
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle="#FFF3B0"; ctx.beginPath(); ctx.arc(0,0,3.4,0,7); ctx.fill();
+  }
+  ctx.restore();
+}
+/* ---------- מכניקות ופריטים של העולמות המתקדמים ---------- */
+function drawSprings(){
+  for(const s of springs){
+    if(s.x<cam.x-60||s.x>cam.x+viewW+60) continue;
+    const c=1-s.t*0.55;                            // דחיסה רגעית מיד אחרי הקפיצה
+    const base=s.y, x=s.x;
+    ctx.fillStyle="#5A6B7C"; rr(x-22,base-7,44,8,3); ctx.fill();
+    ctx.strokeStyle="#FFD166"; ctx.lineWidth=4; ctx.lineCap="round";
+    ctx.beginPath();
+    for(let i=0;i<4;i++){
+      ctx.moveTo(x-13,base-7-i*7*c); ctx.lineTo(x+13,base-7-(i+1)*7*c);
+    }
+    ctx.stroke(); ctx.lineCap="butt";
+    const top=base-7-28*c;
+    ctx.fillStyle="#FF6FA5"; rr(x-20,top-11,40,12,5); ctx.fill();
+    ctx.fillStyle="rgba(255,255,255,0.5)"; rr(x-15,top-9,30,4,2); ctx.fill();
+    ctx.fillStyle="rgba(255,255,255,0.8)"; ctx.textAlign="center";
+    ctx.font="800 11px 'Segoe UI',Arial"; ctx.fillText("▲",x,top-1);
+  }
+}
+function drawMovers(){
+  for(const m of movers){
+    if(m.x+m.w<cam.x-60||m.x>cam.x+viewW+60) continue;
+    ctx.fillStyle="#5F45C9"; rr(m.x,m.y,m.w,m.h,6); ctx.fill();
+    ctx.fillStyle="#A78BFF"; rr(m.x,m.y,m.w,7,5); ctx.fill();
+    ctx.fillStyle="rgba(255,255,255,0.75)"; ctx.textAlign="center";
+    ctx.font="700 11px 'Segoe UI',Arial";
+    ctx.fillText(m.ay?"↕":"↔",m.x+m.w/2,m.y+13);       // חיווי כיוון — שיהיה ברור שהיא נעה
+  }
+}
+function drawGem(g){
+  const bob=Math.sin(state.time*2.2+g.ph)*4, x=g.x, y=g.y+bob;
+  const gl=ctx.createRadialGradient(x,y,3,x,y,26);
+  gl.addColorStop(0,"rgba(124,232,232,0.5)"); gl.addColorStop(1,"rgba(124,232,232,0)");
+  ctx.fillStyle=gl; ctx.beginPath(); ctx.arc(x,y,26,0,7); ctx.fill();
+  ctx.fillStyle="#3FC9D9"; ctx.beginPath();
+  ctx.moveTo(x,y-13); ctx.lineTo(x+11,y-3); ctx.lineTo(x,y+13); ctx.lineTo(x-11,y-3); ctx.closePath(); ctx.fill();
+  ctx.fillStyle="#8BEFF5"; ctx.beginPath();
+  ctx.moveTo(x,y-13); ctx.lineTo(x-11,y-3); ctx.lineTo(x-3,y-3); ctx.closePath(); ctx.fill();
+  ctx.fillStyle="rgba(255,255,255,0.85)"; ctx.beginPath();
+  ctx.moveTo(x-1,y-10); ctx.lineTo(x+4,y-4); ctx.lineTo(x-1,y-1); ctx.closePath(); ctx.fill();
+}
+function drawFeather(f){
+  const bob=Math.sin(state.time*2+f.ph)*5, x=f.x, y=f.y+bob;
+  ctx.save(); ctx.translate(x,y); ctx.rotate(-0.5+Math.sin(state.time*1.4+f.ph)*0.16);
+  const gl=ctx.createRadialGradient(0,0,3,0,0,26);
+  gl.addColorStop(0,"rgba(185,166,255,0.5)"); gl.addColorStop(1,"rgba(185,166,255,0)");
+  ctx.fillStyle=gl; ctx.beginPath(); ctx.arc(0,0,26,0,7); ctx.fill();
+  ctx.fillStyle="#B9A6FF"; ctx.beginPath(); ctx.ellipse(0,0,6,15,0,0,7); ctx.fill();
+  ctx.fillStyle="#E4DCFF"; ctx.beginPath(); ctx.ellipse(-2,0,3,13,0,0,7); ctx.fill();
+  ctx.strokeStyle="#6E5CB8"; ctx.lineWidth=1.6;
+  ctx.beginPath(); ctx.moveTo(0,-14); ctx.lineTo(0,17); ctx.stroke();
+  ctx.restore();
+}
+function drawStarItem(){
+  if(!starItem||starItem.taken) return;
+  const bob=Math.sin(state.time*1.6)*6, x=starItem.x, y=starItem.y+bob;
+  if(x<cam.x-70||x>cam.x+viewW+70) return;
+  const gl=ctx.createRadialGradient(x,y,4,x,y,40);
+  gl.addColorStop(0,"rgba(255,209,102,0.55)"); gl.addColorStop(1,"rgba(255,209,102,0)");
+  ctx.fillStyle=gl; ctx.beginPath(); ctx.arc(x,y,40,0,7); ctx.fill();
+  ctx.save(); ctx.translate(x,y); ctx.rotate(Math.sin(state.time*1.1)*0.25);
+  ctx.fillStyle="#FFD166"; ctx.beginPath();
+  for(let i=0;i<10;i++){ const r=i%2?8:18, a=i/10*Math.PI*2-Math.PI/2;
+    ctx.lineTo(Math.cos(a)*r,Math.sin(a)*r); }
+  ctx.closePath(); ctx.fill();
+  ctx.fillStyle="#FFF3B0"; ctx.beginPath();
+  for(let i=0;i<10;i++){ const r=i%2?4:10, a=i/10*Math.PI*2-Math.PI/2;
+    ctx.lineTo(Math.cos(a)*r,Math.sin(a)*r); }
+  ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+function drawFlag(){
+  const x=W.flagX;
+  ctx.fillStyle="#5A6B7C"; ctx.fillRect(x-3,GY-160,6,160);
+  ctx.fillStyle="#FFD166"; ctx.beginPath(); ctx.arc(x,GY-164,6,0,7); ctx.fill();
+  const wv=Math.sin(state.time*4)*6;
+  ctx.fillStyle="#FF6FA5"; ctx.beginPath();
+  ctx.moveTo(x+3,GY-156); ctx.lineTo(x+64,GY-140+wv*0.4); ctx.lineTo(x+3,GY-118); ctx.closePath(); ctx.fill();
+  ctx.fillStyle="#FFF"; ctx.font="800 17px 'Segoe UI',Arial"; ctx.textAlign="center";
+  ctx.save(); ctx.translate(x+30,GY-138+wv*0.2); ctx.fillText("🏁",0,4); ctx.restore();
+}
+function drawPlayer(){
+  const p=player;
+  const sq=p.squash*0.22, stretch=p.onGround?0:Math.min(0.14,Math.abs(p.vy)/4000);
+  const sy=1-sq+stretch, sx=1+sq-stretch;
+  ctx.save();
+  ctx.translate(p.x+PW/2,p.y+PH);
+  ctx.scale(p.face*sx,sy);
+  const t=p.walk;
+  const legA=p.onGround&&Math.abs(p.vx)>20?Math.sin(t)*6:0;
+  const legB=p.onGround&&Math.abs(p.vx)>20?-Math.sin(t)*6:0;
+  ctx.fillStyle="#34495E";
+  rr(-11,-16+Math.min(0,legA),9,16,3); ctx.fill();
+  rr(2,-16+Math.min(0,legB),9,16,3); ctx.fill();
+  ctx.save(); ctx.translate(0,-16);
+  if(p.wings>0){                    // כנפי הנוצה — מנפנפות, ומהבהבות בשלוש השניות האחרונות
+    const fl=Math.sin(state.time*16)*0.5+0.5;
+    ctx.globalAlpha=p.wings<3?(0.3+0.6*Math.abs(Math.sin(state.time*8))):0.95;
+    ctx.fillStyle="#E4DCFF";
+    ctx.save(); ctx.translate(-15,-14); ctx.rotate(-0.55-fl*0.45);
+    ctx.beginPath(); ctx.ellipse(0,0,7,17,0,0,7); ctx.fill(); ctx.restore();
+    ctx.save(); ctx.translate(-19,-8); ctx.rotate(-0.15-fl*0.45);
+    ctx.beginPath(); ctx.ellipse(0,0,6,13,0,0,7); ctx.fill(); ctx.restore();
+    ctx.globalAlpha=1;
+  }
+  ctx.fillStyle="#FFD166"; rr(-21,-19,12,17,5); ctx.fill();
+  ctx.fillStyle="#E8B23A"; rr(-19,-14,8,5,2); ctx.fill();
+  ctx.fillStyle="#2EC4B6"; rr(-13,-24,26,25,8); ctx.fill();
+  ctx.fillStyle="rgba(255,255,255,0.25)"; rr(-13,-24,26,7,7); ctx.fill();
+  ctx.fillStyle="#FFD9B3"; ctx.beginPath(); ctx.arc(1,-36,14,0,7); ctx.fill();
+  ctx.fillStyle="#5B3A1E"; ctx.beginPath();
+  ctx.arc(1,-40,13,Math.PI*0.95,Math.PI*2.05); ctx.fill();
+  ctx.beginPath(); ctx.arc(-4,-49,4,0,7); ctx.arc(3,-51,4,0,7); ctx.arc(9,-48,3.4,0,7); ctx.fill();
+  const blink=p.blink>3.4?0.15:1;
+  ctx.fillStyle="#22303F";
+  ctx.save(); ctx.translate(6,-37); ctx.scale(1,blink);
+  ctx.beginPath(); ctx.arc(0,0,2.4,0,7); ctx.arc(8,0,2.4,0,7); ctx.fill(); ctx.restore();
+  ctx.strokeStyle="#B3564A"; ctx.lineWidth=1.8; ctx.beginPath();
+  ctx.arc(8,-31,4,0.3,Math.PI-0.5); ctx.stroke();
+  ctx.fillStyle="rgba(255,120,120,0.35)"; ctx.beginPath(); ctx.arc(-2,-31,2.6,0,7); ctx.fill();
+  ctx.restore();
+  ctx.restore();
+}
+function drawButterflies(){
+  for(const b of butterflies){
+    const x=b.bx+Math.sin(state.time*0.7+b.ph)*b.r*2;
+    const y=300+Math.sin(state.time*1.3+b.ph*2)*40;
+    if(x<cam.x-40||x>cam.x+viewW+40) continue;
+    const fl=Math.sin(state.time*14+b.ph)*0.8;
+    ctx.save(); ctx.translate(x,y);
+    ctx.fillStyle=["#FF6FA5","#FFD166","#B9A6FF"][Math.floor(b.ph)%3];
+    ctx.save(); ctx.scale(1,0.6+fl*0.4);
+    ctx.beginPath(); ctx.ellipse(-4,0,4,6,0.4,0,7); ctx.ellipse(4,0,4,6,-0.4,0,7); ctx.fill();
+    ctx.restore();
+    ctx.fillStyle="#3A2A18"; ctx.fillRect(-1,-3,2,6);
+    ctx.restore();
+  }
+}
+/* מזג אוויר במרחב המסך: שלג בעולם 2, נצנוצים בעולם 3 */
+function drawWeather(){
+  const t=state.time;
+  if(W.weather==="snow"){
+    ctx.fillStyle="rgba(255,255,255,0.85)";
+    for(let i=0;i<46;i++){
+      const x=((i*211.7 + t*(18+(i%4)*9) + Math.sin(t*0.8+i)*14) % (viewW+80)) - 40;
+      const y=((i*97.3 + t*(26+(i%5)*11)) % (H+40)) - 20;
+      ctx.beginPath(); ctx.arc(x,y,1.6+(i%3)*0.7,0,7); ctx.fill();
+    }
+  }else if(W.weather==="sparkle"){
+    const cols=["#FF9EC0","#FFD166","#B9A6FF","#7CD97C"];
+    for(let i=0;i<30;i++){
+      const x=((i*173.3 + Math.sin(t*0.6+i)*30) % (viewW+60)) - 30;
+      const y=(H+20) - ((i*83.7 + t*(16+(i%3)*8)) % (H+40));
+      ctx.globalAlpha=0.35+0.35*Math.sin(t*3+i);
+      ctx.fillStyle=cols[i%4];
+      ctx.beginPath(); ctx.arc(x,y,2+(i%2),0,7); ctx.fill();
+    }
+    ctx.globalAlpha=1;
+  }else if(W.weather==="ember"){          /* גיצי אש עולים */
+    for(let i=0;i<34;i++){
+      const x=((i*191.7 + Math.sin(t*0.9+i)*26) % (viewW+60)) - 30;
+      const y=(H+20) - ((i*79.3 + t*(34+(i%4)*16)) % (H+60));
+      ctx.globalAlpha=0.25+0.45*Math.sin(t*4+i*1.7);
+      ctx.fillStyle=i%3?"#FF9F3D":"#FFD166";
+      ctx.beginPath(); ctx.arc(x,y,1.5+(i%3)*0.8,0,7); ctx.fill();
+    }
+    ctx.globalAlpha=1;
+  }else if(W.weather==="bubble"){         /* בועות מים עולות */
+    ctx.strokeStyle="rgba(255,255,255,0.7)"; ctx.lineWidth=1.6;
+    for(let i=0;i<26;i++){
+      const x=((i*203.1 + Math.sin(t*0.5+i)*34) % (viewW+60)) - 30;
+      const y=(H+30) - ((i*91.7 + t*(22+(i%3)*10)) % (H+70));
+      const r=3+(i%4)*2.2;
+      ctx.globalAlpha=0.5;
+      ctx.beginPath(); ctx.arc(x,y,r,0,7); ctx.stroke();
+      ctx.fillStyle="rgba(255,255,255,0.55)";
+      ctx.beginPath(); ctx.arc(x-r*0.35,y-r*0.35,r*0.24,0,7); ctx.fill();
+    }
+    ctx.globalAlpha=1;
+  }else if(W.weather==="sand"){           /* סופת חול אופקית */
+    ctx.strokeStyle="rgba(255,236,190,0.55)"; ctx.lineWidth=1.6;
+    for(let i=0;i<30;i++){
+      const x=((i*167.3 + t*(150+(i%5)*46)) % (viewW+120)) - 60;
+      const y=((i*103.7 + Math.sin(t*1.2+i)*16) % (H+20)) - 10;
+      ctx.globalAlpha=0.2+0.3*((i%5)/5);
+      ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x+16+(i%4)*8,y+1.5); ctx.stroke();
+    }
+    ctx.globalAlpha=1;
+  }else if(W.weather==="firefly"){        /* גחליליות */
+    for(let i=0;i<22;i++){
+      const x=((i*221.3 + Math.sin(t*0.45+i*1.3)*70) % (viewW+80)) - 40;
+      const y=120 + ((i*97.1) % (H-220)) + Math.sin(t*0.8+i*2.1)*34;
+      const a=0.25+0.55*Math.max(0,Math.sin(t*2.2+i*1.9));
+      const gl=ctx.createRadialGradient(x,y,1,x,y,11);
+      gl.addColorStop(0,"rgba(200,255,160,"+a+")"); gl.addColorStop(1,"rgba(200,255,160,0)");
+      ctx.fillStyle=gl; ctx.beginPath(); ctx.arc(x,y,11,0,7); ctx.fill();
+      ctx.fillStyle="rgba(240,255,200,"+a+")";
+      ctx.beginPath(); ctx.arc(x,y,1.8,0,7); ctx.fill();
+    }
+  }else if(W.weather==="starry"){         /* נצנוצי כוכבים בשמי הבונוס */
+    for(let i=0;i<28;i++){
+      const x=((i*181.9 + Math.sin(t*0.25+i)*18) % (viewW+60)) - 30;
+      const y=((i*71.3) % (H-140)) + 20;
+      const a=0.25+0.5*Math.max(0,Math.sin(t*1.8+i*2.4));
+      ctx.fillStyle="rgba(255,255,255,"+a+")";
+      const r=1.4+(i%3)*0.9;
+      ctx.beginPath();
+      ctx.moveTo(x,y-r*2.4); ctx.lineTo(x+r*0.7,y-r*0.7); ctx.lineTo(x+r*2.4,y);
+      ctx.lineTo(x+r*0.7,y+r*0.7); ctx.lineTo(x,y+r*2.4); ctx.lineTo(x-r*0.7,y+r*0.7);
+      ctx.lineTo(x-r*2.4,y); ctx.lineTo(x-r*0.7,y-r*0.7); ctx.closePath(); ctx.fill();
+    }
+  }
+}
+function drawParticles(){
+  for(const q of particles){
+    ctx.globalAlpha=Math.max(0,1-q.t/q.life);
+    ctx.fillStyle=q.col;
+    ctx.beginPath(); ctx.arc(q.x,q.y,q.size,0,7); ctx.fill();
+  }
+  ctx.globalAlpha=1;
+  ctx.direction="ltr";                    // "+10" ולא "10+" בהקשר RTL
+  for(const f of floaters){
+    ctx.globalAlpha=Math.max(0,1-f.t/1.1);
+    ctx.fillStyle="#1D2B45"; ctx.font="800 16px 'Segoe UI',Arial"; ctx.textAlign="center";
+    ctx.strokeStyle="rgba(255,255,255,0.9)"; ctx.lineWidth=4;
+    ctx.strokeText(f.text,f.x,f.y-f.t*40); ctx.fillText(f.text,f.x,f.y-f.t*40);
+  }
+  ctx.direction="inherit"; ctx.globalAlpha=1;
+}
+function drawHint(){
+  if(state.stageIdx!==0||state.time>7||!state.running) return;
+  const a=Math.min(1,Math.max(0,7-state.time));
+  ctx.globalAlpha=Math.min(1,a);
+  const x=180,y=GY-150;
+  ctx.fillStyle="rgba(29,43,69,0.85)"; rr(x-108,y-24,216,40,12); ctx.fill();
+  ctx.fillStyle="#FFF8EC"; ctx.font="700 16px 'Segoe UI',Arial"; ctx.textAlign="center";
+  ctx.fillText("← → לזוז   ·   רווח לקפוץ",x,y+2);
+  ctx.globalAlpha=1;
+}
+
+function draw(){
+  ctx.setTransform(scale,0,0,scale,0,0);
+  const pal=palAt(cam.x+viewW/2);
+  drawSky(pal);
+  drawHills(pal);
+  ctx.save(); ctx.translate(-cam.x,0);
+  drawWater();
+  drawDecor(pal);
+  drawGround(pal);
+  drawBridges();
+  drawSprings();
+  drawPlatforms(pal);
+  drawMovers();
+  for(const c of candies) if(!c.taken&&c.x>cam.x-60&&c.x<cam.x+viewW+60) drawCandy(c);
+  for(const g of gems)    if(!g.taken&&g.x>cam.x-60&&g.x<cam.x+viewW+60) drawGem(g);
+  for(const f of feathers)if(!f.taken&&f.x>cam.x-60&&f.x<cam.x+viewW+60) drawFeather(f);
+  drawStarItem();
+  for(const c of cubes)   if(!c.taken&&c.x>cam.x-60&&c.x<cam.x+viewW+60) drawCube(c);
+  drawFlag();
+  if(W.weather==="butterfly") drawButterflies();
+  drawPlayer();
+  drawParticles();
+  drawHint();
+  ctx.restore();
+  drawWeather();
+}
+
+/* שגיאה גלובלית: עד היום היא נבלעה בשקט והמשחק פשוט הפסיק להגיב. */
+window.addEventListener("error",e=>{ console.error("[cq] uncaught",e.message,e.filename+":"+e.lineno); });
+window.addEventListener("unhandledrejection",e=>{ console.error("[cq] promise",e.reason); });
+
+/* ---------- main loop ----------
+   חריגה אחת ב-update או ב-draw הרגה את הלולאה לתמיד: requestAnimationFrame
+   הבא לא נקרא, המסך קפא על הפריים האחרון והמשחק "לא הגיב". עכשיו הלולאה
+   שורדת כל שגיאה — פריים אחד אובד במקום כל המשחק.
+
+   שומר-קיפאון: state.running=false נקבע רק בשלושה מקומות, וכל אחד מהם מלווה
+   בחלונית. אם אין חלונית פתוחה ובכל זאת המשחק אינו רץ — מישהו לא החזיר אותו,
+   והדמות עומדת ולא מגיבה. אחרי כשנייה וחצי משחררים לבד. */
+const OVERLAY_IDS=["introOv","winOv","brOv","repOv","qOv"];
+function anyOverlayOpen(){
+  for(let i=0;i<OVERLAY_IDS.length;i++){
+    const e=document.getElementById(OVERLAY_IDS[i]);
+    if(e&&!e.classList.contains("hidden")) return true;
+  }
+  return false;
+}
+let last=performance.now(), frameErrs=0, stallSince=0;
+function frame(now){
+  const dt=Math.min(1/30,(now-last)/1000); last=now;
+  try{
+    if(!state.running&&!state.flagHit&&!qUI.open&&!brBridge&&!anyOverlayOpen()){
+      if(!stallSince) stallSince=now;
+      else if(now-stallSince>1500){ stallSince=0; state.running=true;
+        console.warn("[cq] auto-resume: המשחק היה עצור בלי חלונית פתוחה"); }
+    }else stallSince=0;
+    if(state.running&&!document.hidden) update(dt);
+    draw();
+  }catch(err){
+    if(frameErrs++<5){
+      console.error("[cq] frame error",err);
+      try{ showToast("משהו נתקע לרגע — ממשיכים 🛠",2200); }catch(e){}
+    }
+  }
+  requestAnimationFrame(frame);
+}
+initGame();
+refreshResumeBtn();
+authInit();                 // אחרי ש-$/SAVE_KEY/refreshResumeBtn כבר קיימים
+resize();
+requestAnimationFrame(frame);
+</script>
+</div>
+
+</body>
+</html>
